@@ -1,5 +1,34 @@
 const { createValidationError, createNotFoundError, validateRequiredFields, validateDateFormat, validateCasoStatus } = require('./errorHandler');
 
+function validarSenha(senha) {
+    // A senha deve ter no mínimo 8 caracteres
+    if (senha.length < 8) {
+        return false;
+    }
+    
+    // Pelo menos uma letra minúscula
+    if (!/[a-z]/.test(senha)) {
+        return false;
+    }
+    
+    // Pelo menos uma letra maiúscula
+    if (!/[A-Z]/.test(senha)) {
+        return false;
+    }
+    
+    // Pelo menos um número
+    if (!/\d/.test(senha)) {
+        return false;
+    }
+    
+    // Pelo menos um caractere especial
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(senha)) {
+        return false;
+    }
+    
+    return true;
+}
+
 function validateAgenteData(dados, isUpdate = false) {
     const errors = {};
     if (Object.prototype.hasOwnProperty.call(dados, 'id')) {
@@ -74,6 +103,7 @@ async function validateCasoData(dados, agentesRepository, isUpdate = false) {
 }
 
 module.exports = {
+  validarSenha,
   validateAgenteData,
   validateCasoData,
 };
