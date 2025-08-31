@@ -1,6 +1,5 @@
 exports.seed = async function seed(knex) {
-  await knex('casos').del();
-  await knex('agentes').del();
+  // Agentes já foram limpos pelo seed principal
 
   await knex('agentes').insert([
     {

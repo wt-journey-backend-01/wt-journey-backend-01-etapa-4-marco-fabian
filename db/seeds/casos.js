@@ -1,4 +1,6 @@
 exports.seed = async function seed(knex) {
+  // Casos já foram limpos pelo seed principal
+  
   const agentes = await knex('agentes').select('id').orderBy('id');
   if (agentes.length < 2) {
     throw new Error('Seeds de agentes devem ser executadas antes dos casos.');

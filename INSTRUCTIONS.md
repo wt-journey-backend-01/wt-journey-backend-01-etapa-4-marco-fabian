@@ -17,7 +17,12 @@
 - `npx knex migrate:latest`
 
 ## 4) Seeds
-- `npx knex seed:run`
+- `npx knex seed:run` (executa todos os seeds na ordem: usuários, agentes, casos)
+
+**Usuários criados automaticamente:**
+- **admin@policia.gov.br** / **Admin123!** (Administrador do Sistema)
+- **user@policia.gov.br** / **User456@** (Usuário Padrão)  
+- **teste@policia.gov.br** / **Test789#** (Teste de Sistema)
 
 ## 5) API
 - `npm run start`
