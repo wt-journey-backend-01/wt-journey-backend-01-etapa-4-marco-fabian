@@ -9,97 +9,97 @@ class APIError extends Error {
   }
 }
 
-export class InvalidIdError extends APIError {
+class InvalidIdError extends APIError {
   constructor(errors) {
     super(400, "ID inválido", errors);
   }
 }
 
-export class IdNotFoundError extends APIError {
+class IdNotFoundError extends APIError {
   constructor(errors) {
     super(404, "ID inexistente", errors);
   }
 }
 
-export class InvalidFormatError extends APIError {
+class InvalidFormatError extends APIError {
   constructor(errors) {
     super(400, "Parâmetros inválidos", errors);
   }
 }
 
-export class InvalidQueryError extends APIError {
+class InvalidQueryError extends APIError {
   constructor(errors) {
     super(400, "Query inválida", errors);
   }
 }
 
-export class NotFoundRouteError extends APIError {
+class NotFoundRouteError extends APIError {
   constructor(errors) {
     super(404, "Endpoint inexistente", errors);
   }
 }
 
-export class EmailExistsError extends APIError {
+class EmailExistsError extends APIError {
   constructor(errors) {
     super(400, "Email existente", errors);
   }
 }
 
-export class UserNotFoundError extends APIError {
+class UserNotFoundError extends APIError {
   constructor(errors) {
     super(401, "Usuário não encontrado", errors);
   }
 }
 
-export class InvalidPasswordError extends APIError {
+class InvalidPasswordError extends APIError {
   constructor(errors) {
     super(401, "Senha inválida", errors);
   }
 }
 
-export class TokenError extends APIError {
+class TokenError extends APIError {
   constructor(errors) {
     super(401, "Token inválido", errors);
   }
 }
 
-export class ValidationError extends APIError {
+class ValidationError extends APIError {
   constructor(errors) {
     super(400, "Dados inválidos", errors);
   }
 }
 
-export class RequiredFieldError extends APIError {
+class RequiredFieldError extends APIError {
   constructor(errors) {
     super(400, "Campos obrigatórios", errors);
   }
 }
 
-export class DateValidationError extends APIError {
+class DateValidationError extends APIError {
   constructor(errors) {
     super(400, "Data inválida", errors);
   }
 }
 
-export class CargoValidationError extends APIError {
+class CargoValidationError extends APIError {
   constructor(errors) {
     super(400, "Cargo inválido", errors);
   }
 }
 
-export class StatusValidationError extends APIError {
+class StatusValidationError extends APIError {
   constructor(errors) {
     super(400, "Status inválido", errors);
   }
 }
 
-export class AgenteNotFoundError extends APIError {
+class AgenteNotFoundError extends APIError {
   constructor(errors) {
     super(404, "Agente não encontrado", errors);
   }
 }
 
-export class CasoNotFoundError extends APIError {
+class CasoNotFoundError extends APIError {
   constructor(errors) {
     super(404, "Caso não encontrado", errors);
   }
