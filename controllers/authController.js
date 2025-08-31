@@ -106,7 +106,7 @@ class AuthController {
       );
 
       res.status(200).json({
-        acess_token: token
+        access_token: token
       });
     } catch (error) {
       console.error('Erro ao fazer login:', error);
