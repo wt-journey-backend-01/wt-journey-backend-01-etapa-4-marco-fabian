@@ -1,42 +1,38 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const usuariosRepository = require('../repositories/usuariosRepository');
-const { validarSenha } = require('../utils/validators');
+const { 
+  EmailExistsError, 
+  UserNotFoundError, 
+  InvalidPasswordError,
+  ValidationError 
+} = require('../utils/errorHandler');
+const { 
+  usuarioRegSchema, 
+  usuarioLoginSchema, 
+  idSchema 
+} = require('../utils/schemas');
 
 class AuthController {
-  async register(req, res) {
+  async register(req, res, next) {
     try {
-      const { nome, email, senha } = req.body;
-
-      const allowedFields = ['nome', 'email', 'senha'];
-      const receivedFields = Object.keys(req.body);
-      const extraFields = receivedFields.filter(field => !allowedFields.includes(field));
-      
-      if (extraFields.length > 0) {
-        return res.status(400).json({
-          error: `Campo(s) extra(s) não permitido(s): ${extraFields.join(', ')}`
+      // Validar dados com Zod
+      const bodyParse = usuarioRegSchema.safeParse(req.body);
+      if (!bodyParse.success) {
+        const { formErrors, fieldErrors } = bodyParse.error.flatten();
+        throw new ValidationError({
+          ...(formErrors.length ? { bodyFormat: formErrors } : {}),
+          ...fieldErrors
         });
       }
 
-      // Validações básicas
-      if (!nome || !email || !senha) {
-        return res.status(400).json({
-          error: 'Todos os campos são obrigatórios'
-        });
-      }
-
-      // Validar formato da senha
-      if (!validarSenha(senha)) {
-        return res.status(400).json({
-          error: 'A senha deve ter no mínimo 8 caracteres, sendo pelo menos uma letra minúscula, uma letra maiúscula, um número e um caractere especial'
-        });
-      }
+      const { nome, email, senha } = bodyParse.data;
 
       // Verificar se o email já existe
       const usuarioExistente = await usuariosRepository.findByEmail(email);
       if (usuarioExistente) {
-        return res.status(400).json({
-          error: 'Email já está em uso'
+        throw new EmailExistsError({
+          email: `O email '${email}' já está em uso.`
         });
       }
 
@@ -60,37 +56,37 @@ class AuthController {
         }
       });
     } catch (error) {
-      console.error('Erro ao registrar usuário:', error);
-      res.status(500).json({
-        error: 'Erro interno do servidor'
-      });
+      next(error);
     }
   }
 
-  async login(req, res) {
+  async login(req, res, next) {
     try {
-      const { email, senha } = req.body;
-
-      // Validações básicas
-      if (!email || !senha) {
-        return res.status(400).json({
-          error: 'Email e senha são obrigatórios'
+      // Validar dados com Zod
+      const bodyParse = usuarioLoginSchema.safeParse(req.body);
+      if (!bodyParse.success) {
+        const { formErrors, fieldErrors } = bodyParse.error.flatten();
+        throw new ValidationError({
+          ...(formErrors.length ? { bodyFormat: formErrors } : {}),
+          ...fieldErrors
         });
       }
+
+      const { email, senha } = bodyParse.data;
 
       // Buscar usuário por email
       const usuario = await usuariosRepository.findByEmail(email);
       if (!usuario) {
-        return res.status(401).json({
-          error: 'Credenciais inválidas'
+        throw new UserNotFoundError({
+          user: `O usuário com o email '${email}' não foi encontrado.`
         });
       }
 
       // Verificar senha
       const senhaValida = await bcrypt.compare(senha, usuario.senha);
       if (!senhaValida) {
-        return res.status(401).json({
-          error: 'Credenciais inválidas'
+        throw new InvalidPasswordError({
+          senha: 'A senha é inválida.'
         });
       }
 
@@ -109,14 +105,11 @@ class AuthController {
         access_token: token
       });
     } catch (error) {
-      console.error('Erro ao fazer login:', error);
-      res.status(500).json({
-        error: 'Erro interno do servidor'
-      });
+      next(error);
     }
   }
 
-  async logout(req, res) {
+  async logout(req, res, next) {
     try {
       // Em uma implementação real, você poderia invalidar o token
       // Por enquanto, apenas retornamos sucesso
@@ -124,60 +117,49 @@ class AuthController {
         message: 'Logout realizado com sucesso'
       });
     } catch (error) {
-      console.error('Erro ao fazer logout:', error);
-      res.status(500).json({
-        error: 'Erro interno do servidor'
-      });
+      next(error);
     }
   }
 
-  async listUsers(req, res) {
+  async listUsers(req, res, next) {
     try {
       const usuarios = await usuariosRepository.findAll();
       res.status(200).json(usuarios);
     } catch (error) {
-      console.error('Erro ao listar usuários:', error);
-      res.status(500).json({
-        error: 'Erro interno do servidor'
-      });
+      next(error);
     }
   }
 
-  async deleteUser(req, res) {
+  async deleteUser(req, res, next) {
     try {
-      const { id } = req.params;
-      const usuarioId = parseInt(id);
-
-      if (isNaN(usuarioId)) {
-        return res.status(400).json({
-          error: 'ID inválido'
-        });
+      // Validar ID com Zod
+      const idParse = idSchema.safeParse(req.params);
+      if (!idParse.success) {
+        const { fieldErrors } = idParse.error.flatten();
+        throw new ValidationError(fieldErrors);
       }
 
-      const deletado = await usuariosRepository.delete(usuarioId);
+      const { id } = idParse.data;
+
+      const deletado = await usuariosRepository.delete(id);
       if (!deletado) {
-        return res.status(404).json({
-          error: 'Usuário não encontrado'
+        throw new UserNotFoundError({
+          id: `O ID '${id}' não existe nos usuários`
         });
       }
 
-      res.status(200).json({
-        message: 'Usuário deletado com sucesso'
-      });
+      res.status(204).send();
     } catch (error) {
-      console.error('Erro ao deletar usuário:', error);
-      res.status(500).json({
-        error: 'Erro interno do servidor'
-      });
+      next(error);
     }
   }
 
-  async getProfile(req, res) {
+  async getProfile(req, res, next) {
     try {
       const usuario = await usuariosRepository.findById(req.user.id);
       if (!usuario) {
-        return res.status(404).json({
-          error: 'Usuário não encontrado'
+        throw new UserNotFoundError({
+          user: 'Usuário não encontrado'
         });
       }
 
@@ -189,10 +171,7 @@ class AuthController {
         updated_at: usuario.updated_at
       });
     } catch (error) {
-      console.error('Erro ao obter perfil:', error);
-      res.status(500).json({
-        error: 'Erro interno do servidor'
-      });
+      next(error);
     }
   }
 }

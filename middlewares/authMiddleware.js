@@ -1,36 +1,40 @@
 const jwt = require('jsonwebtoken');
+const { TokenError } = require('../utils/errorHandler');
 
 const authMiddleware = (req, res, next) => {
   try {
-    // Obter o token do header Authorization
+    // Obter o token do header Authorization ou cookie
     const authHeader = req.headers.authorization;
+    const cookieToken = req.cookies?.access_token;
     
-    if (!authHeader) {
-      return res.status(401).json({
-        error: 'Token de acesso não fornecido'
-      });
-    }
-
-    // Verificar se o header está no formato correto: "Bearer <token>"
-    const parts = authHeader.split(' ');
+    let token;
     
-    if (parts.length !== 2) {
-      return res.status(401).json({
-        error: 'Formato de token inválido'
-      });
-    }
+    if (authHeader) {
+      // Verificar se o header está no formato correto: "Bearer <token>"
+      const parts = authHeader.split(' ');
+      
+      if (parts.length !== 2) {
+        throw new TokenError({
+          authorization: 'Formato de token inválido. Use: Bearer <token>'
+        });
+      }
 
-    const [scheme, token] = parts;
+      const [scheme, headerToken] = parts;
 
-    if (!/^Bearer$/i.test(scheme)) {
-      return res.status(401).json({
-        error: 'Formato de token inválido'
-      });
+      if (!/^Bearer$/i.test(scheme)) {
+        throw new TokenError({
+          authorization: 'Formato de token inválido. Use: Bearer <token>'
+        });
+      }
+
+      token = headerToken;
+    } else if (cookieToken) {
+      token = cookieToken;
     }
 
     if (!token) {
-      return res.status(401).json({
-        error: 'Token não fornecido'
+      throw new TokenError({
+        access_token: 'Token de acesso não fornecido'
       });
     }
 
@@ -38,19 +42,19 @@ const authMiddleware = (req, res, next) => {
     jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
       if (err) {
         if (err.name === 'TokenExpiredError') {
-          return res.status(401).json({
-            error: 'Token expirado'
+          throw new TokenError({
+            token: 'Token expirado'
           });
         }
         
         if (err.name === 'JsonWebTokenError') {
-          return res.status(401).json({
-            error: 'Token inválido'
+          throw new TokenError({
+            token: 'Token inválido'
           });
         }
 
-        return res.status(401).json({
-          error: 'Token inválido'
+        throw new TokenError({
+          token: 'Token inválido'
         });
       }
 
@@ -60,9 +64,7 @@ const authMiddleware = (req, res, next) => {
     });
   } catch (error) {
     console.error('Erro no middleware de autenticação:', error);
-    return res.status(500).json({
-      error: 'Erro interno do servidor'
-    });
+    return next(error);
   }
 };
 

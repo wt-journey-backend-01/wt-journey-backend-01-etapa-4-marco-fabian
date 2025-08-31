@@ -1,43 +1,38 @@
 const agentesRepository = require('../repositories/agentesRepository');
-const { createValidationError, validateDateFormat, createNotFoundError } = require('../utils/errorHandler');
-const { validateAgenteData } = require('../utils/validators');
-const { handleCreate, handleUpdate, handlePatch, handleGetById, handleDelete } = require('../utils/controllerHelpers');
 const casosRepository = require('../repositories/casosRepository');
+const { 
+  ValidationError, 
+  IdNotFoundError, 
+  DateValidationError, 
+  CargoValidationError,
+  AgenteNotFoundError 
+} = require('../utils/errorHandler');
+const { 
+  agenteSchema, 
+  agentesQuerySchema, 
+  idSchema 
+} = require('../utils/schemas');
 
 async function getAllAgentes(req, res, next) {
     try {
-        const { cargo, sort } = req.query;
-        
-        const cargoParam = cargo ? cargo.toLowerCase() : undefined;
-        const sortParam = sort ? sort.toLowerCase() : undefined;
+        // Validar query parameters com Zod
+        const queryParse = agentesQuerySchema.safeParse(req.query);
+        if (!queryParse.success) {
+            const { fieldErrors } = queryParse.error.flatten();
+            throw new ValidationError(fieldErrors);
+        }
+
+        const { cargo, sort } = queryParse.data;
         
         let agentes;
 
-        if (cargoParam) {
-            const validCargos = ['inspetor', 'delegado'];
-            if (!validCargos.includes(cargoParam)) {
-                throw createValidationError('Parâmetros inválidos', { 
-                    cargo: "O campo 'cargo' deve ser 'inspetor' ou 'delegado'" 
-                });
-            }
-        }
-
-        if (sortParam) {
-            const validSortFields = ['datadeincorporacao', '-datadeincorporacao'];
-            if (!validSortFields.includes(sortParam)) {
-                throw createValidationError('Parâmetros inválidos', { 
-                    sort: "O campo 'sort' deve ser 'dataDeIncorporacao' ou '-dataDeIncorporacao'" 
-                });
-            }
-        }
-
-        if (cargoParam && sortParam) {
-            const order = sortParam.startsWith('-') ? 'desc' : 'asc';
-            agentes = await agentesRepository.findByCargoSorted(cargoParam, order);
-        } else if (cargoParam) {
-            agentes = await agentesRepository.findByCargo(cargoParam);
-        } else if (sortParam) {
-            const order = sortParam.startsWith('-') ? 'desc' : 'asc';
+        if (cargo && sort) {
+            const order = sort.startsWith('-') ? 'desc' : 'asc';
+            agentes = await agentesRepository.findByCargoSorted(cargo, order);
+        } else if (cargo) {
+            agentes = await agentesRepository.findByCargo(cargo);
+        } else if (sort) {
+            const order = sort.startsWith('-') ? 'desc' : 'asc';
             agentes = await agentesRepository.findAllSorted(order);
         } else {
             agentes = await agentesRepository.findAll();
@@ -50,88 +45,170 @@ async function getAllAgentes(req, res, next) {
 }
 
 function getAgenteById(req, res, next) {
-    const { id } = req.params;
-    const parsed = Number(id);
-    if (!Number.isInteger(parsed) || parsed <= 0) {
-        return next(createValidationError('Parâmetros inválidos', { id: 'id deve ser um inteiro positivo' }));
+    try {
+        // Validar ID com Zod
+        const idParse = idSchema.safeParse(req.params);
+        if (!idParse.success) {
+            const { fieldErrors } = idParse.error.flatten();
+            throw new ValidationError(fieldErrors);
+        }
+
+        const { id } = idParse.data;
+        handleGetById(agentesRepository, 'Agente', req, res, next);
+    } catch (error) {
+        next(error);
     }
-    handleGetById(agentesRepository, 'Agente', req, res, next);
 }
 
 function createAgente(req, res, next) {
-    const validateCreate = (dados) => {
-        validateAgenteData(dados, false);
-    };
-    
-    handleCreate(agentesRepository, validateCreate, req, res, next);
+    try {
+        // Validar dados com Zod
+        const bodyParse = agenteSchema.safeParse(req.body);
+        if (!bodyParse.success) {
+            const { formErrors, fieldErrors } = bodyParse.error.flatten();
+            throw new ValidationError({
+                ...(formErrors.length ? { bodyFormat: formErrors } : {}),
+                ...fieldErrors
+            });
+        }
+
+        const dados = bodyParse.data;
+        
+        // Validação adicional de data
+        const data = new Date(dados.dataDeIncorporacao);
+        const hoje = new Date();
+        const dataStr = data.toISOString().split('T')[0];
+        const hojeStr = hoje.toISOString().split('T')[0];
+        
+        if (dataStr > hojeStr) {
+            throw new DateValidationError({
+                dataDeIncorporacao: 'A data de incorporação não pode ser no futuro'
+            });
+        }
+
+        handleCreate(agentesRepository, () => {}, req, res, next);
+    } catch (error) {
+        next(error);
+    }
 }
 
 function updateAgente(req, res, next) {
-    const { id } = req.params;
-    const parsed = Number(id);
-    if (!Number.isInteger(parsed) || parsed <= 0) {
-        return next(createValidationError('Parâmetros inválidos', { id: 'id deve ser um inteiro positivo' }));
+    try {
+        // Validar ID com Zod
+        const idParse = idSchema.safeParse(req.params);
+        if (!idParse.success) {
+            const { fieldErrors } = idParse.error.flatten();
+            throw new ValidationError(fieldErrors);
+        }
+
+        // Validar dados com Zod
+        const bodyParse = agenteSchema.safeParse(req.body);
+        if (!bodyParse.success) {
+            const { formErrors, fieldErrors } = bodyParse.error.flatten();
+            throw new ValidationError({
+                ...(formErrors.length ? { bodyFormat: formErrors } : {}),
+                ...fieldErrors
+            });
+        }
+
+        const dados = bodyParse.data;
+        
+        // Validação adicional de data
+        const data = new Date(dados.dataDeIncorporacao);
+        const hoje = new Date();
+        const dataStr = data.toISOString().split('T')[0];
+        const hojeStr = hoje.toISOString().split('T')[0];
+        
+        if (dataStr > hojeStr) {
+            throw new DateValidationError({
+                dataDeIncorporacao: 'A data de incorporação não pode ser no futuro'
+            });
+        }
+
+        handleUpdate(agentesRepository, () => {}, req, res, next);
+    } catch (error) {
+        next(error);
     }
-    handleUpdate(agentesRepository, validateAgenteData, req, res, next);
 }
 
 function patchAgente(req, res, next) {
-    const { id } = req.params;
-    const parsed = Number(id);
-    if (!Number.isInteger(parsed) || parsed <= 0) {
-        return next(createValidationError('Parâmetros inválidos', { id: 'id deve ser um inteiro positivo' }));
-    }
-    const validatePatch = (dados) => {
+    try {
+        // Validar ID com Zod
+        const idParse = idSchema.safeParse(req.params);
+        if (!idParse.success) {
+            const { fieldErrors } = idParse.error.flatten();
+            throw new ValidationError(fieldErrors);
+        }
+
+        const { id } = idParse.data;
+        
+        // Validar dados parciais
+        const dados = req.body;
         const errors = {};
         
         if (dados.dataDeIncorporacao) {
-            const dateError = validateDateFormat(dados.dataDeIncorporacao, 'dataDeIncorporacao');
-            if (dateError) {
-                errors.dataDeIncorporacao = dateError;
-            } else {
-                const data = new Date(dados.dataDeIncorporacao);
-                const hoje = new Date();
-                const dataStr = data.toISOString().split('T')[0];
-                const hojeStr = hoje.toISOString().split('T')[0];
-                if (dataStr > hojeStr) {
-                    errors.dataDeIncorporacao = 'A data de incorporação não pode ser no futuro';
-                }
+            const data = new Date(dados.dataDeIncorporacao);
+            const hoje = new Date();
+            const dataStr = data.toISOString().split('T')[0];
+            const hojeStr = hoje.toISOString().split('T')[0];
+            
+            if (dataStr > hojeStr) {
+                errors.dataDeIncorporacao = 'A data de incorporação não pode ser no futuro';
             }
         }
         
-        const validCargos = ['inspetor', 'delegado'];
-        if (dados.cargo && !validCargos.includes(dados.cargo.toLowerCase())) {
-            errors.cargo = "O campo 'cargo' deve ser 'inspetor' ou 'delegado'";
+        if (dados.cargo) {
+            const validCargos = ['inspetor', 'delegado'];
+            if (!validCargos.includes(dados.cargo.toLowerCase())) {
+                errors.cargo = "O campo 'cargo' deve ser 'inspetor' ou 'delegado'";
+            }
         }
         
         if (Object.keys(errors).length > 0) {
-            throw createValidationError('Parâmetros inválidos', errors);
+            throw new ValidationError(errors);
         }
-    };
-    handlePatch(agentesRepository, validatePatch, req, res, next);
+
+        handlePatch(agentesRepository, () => {}, req, res, next);
+    } catch (error) {
+        next(error);
+    }
 }
 
 function deleteAgente(req, res, next) {
-    const { id } = req.params;
-    const parsed = Number(id);
-    if (!Number.isInteger(parsed) || parsed <= 0) {
-        return next(createValidationError('Parâmetros inválidos', { id: 'id deve ser um inteiro positivo' }));
+    try {
+        // Validar ID com Zod
+        const idParse = idSchema.safeParse(req.params);
+        if (!idParse.success) {
+            const { fieldErrors } = idParse.error.flatten();
+            throw new ValidationError(fieldErrors);
+        }
+
+        const { id } = idParse.data;
+        handleDelete(agentesRepository, 'Agente', req, res, next);
+    } catch (error) {
+        next(error);
     }
-    handleDelete(agentesRepository, 'Agente', req, res, next);
 }
 
 async function getCasosByAgente(req, res, next) {
     try {
-        const { id } = req.params;
-        const parsed = Number(id);
-        if (!Number.isInteger(parsed) || parsed <= 0) {
-            return next(createValidationError('Parâmetros inválidos', { id: 'id deve ser um inteiro positivo' }));
+        // Validar ID com Zod
+        const idParse = idSchema.safeParse(req.params);
+        if (!idParse.success) {
+            const { fieldErrors } = idParse.error.flatten();
+            throw new ValidationError(fieldErrors);
         }
-        const agente = await agentesRepository.findById(parsed);
+
+        const { id } = idParse.data;
+        
+        const agente = await agentesRepository.findById(id);
         if (!agente) {
-            throw createNotFoundError('Agente não encontrado');
+            throw new AgenteNotFoundError({
+                agente: 'Agente não encontrado'
+            });
         }
-        const casos = await casosRepository.findByAgenteId(parsed);
+        
+        const casos = await casosRepository.findByAgenteId(id);
         res.status(200).json(casos);
     } catch (error) {
         next(error);
