@@ -1,37 +1,41 @@
 <sup>Esse é um feedback gerado por IA, ele pode conter erros.</sup>
 
-Você tem 8 créditos restantes para usar o sistema de feedback AI.
+Você tem 7 créditos restantes para usar o sistema de feedback AI.
 
 # Feedback para marco-fabian:
 
 Nota final: **50.3/100**
 
-Olá, Marco Fabian! 👋🚀
+Olá, Marco Fabian! 🚀
 
-Primeiramente, parabéns pelo empenho e dedicação em construir uma API REST segura e funcional usando Node.js, Express, PostgreSQL e JWT! 🎉 Você já tem uma base muito sólida, com boa organização em controllers, repositories, middlewares e rotas, além de usar boas práticas como hashing de senha com bcrypt e validação cuidadosa dos dados. Isso é fundamental para projetos profissionais.
-
----
-
-### 🎯 Conquistas que merecem destaque
-
-- Seu **middleware de autenticação** está bem estruturado, tratando os erros de token de forma clara e respondendo com status 401 quando necessário.
-- O uso do **bcrypt** para hash de senhas e a validação rigorosa das mesmas no `authController` mostram atenção à segurança.
-- Você implementou corretamente o login, registro, logout e proteção de rotas com JWT.
-- A estrutura do seu projeto está adequada, seguindo o padrão MVC, com pastas separadas para controllers, repositories, middlewares e rotas.
-- Os testes base que passaram incluem a criação e login de usuários, logout, deleção e validação de campos obrigatórios, o que mostra que a base da autenticação está funcionando.
-- Você também implementou o endpoint `/usuarios/me` e filtragem de agentes e casos, o que são bônus importantes para a aplicação.
+Antes de mais nada, parabéns pelo esforço e pela entrega dessa etapa tão complexa que envolve segurança e autenticação! Você conseguiu implementar várias funcionalidades essenciais, e isso já é um grande avanço. 🎉
 
 ---
 
-### 🚩 Testes que falharam e análise de causa raiz
+## 🎉 Pontos Positivos e Conquistas Bônus
 
-Você teve várias falhas, mas elas estão relacionadas a pontos que, uma vez ajustados, vão destravar sua nota e melhorar a qualidade do seu código. Vamos analisar os principais grupos de testes que falharam e as possíveis causas:
+- Sua estrutura de diretórios está muito bem organizada e segue o padrão MVC esperado, com controllers, repositories, middlewares e rotas bem separados — isso é fundamental para a escalabilidade e manutenção do projeto.
+- O middleware de autenticação (`authMiddleware.js`) está muito bem implementado, tratando corretamente os erros de token expirado, inválido e ausência de token.
+- A implementação do registro, login, logout e exclusão de usuários na `authController.js` está bastante completa e cobre os principais cenários de validação e erro.
+- Os testes base de criação, login, logout, exclusão de usuário e proteção das rotas com JWT passaram, mostrando que a base da autenticação está funcionando.
+- Você também implementou corretamente a filtragem e busca em agentes e casos, além de mensagens de erro customizadas, o que é um diferencial.
+- O endpoint `/usuarios/me` está implementado e funcionando, o que é um bônus importante para a experiência do usuário.
 
 ---
 
-#### 1. **USERS: Recebe erro 400 ao tentar criar um usuário com e-mail já em uso**
+## 🚩 Testes que Falharam e Análise Detalhada
 
-- **O que seu código faz:** No `authController.register`, você verifica se o email já existe e retorna status 400 com mensagem "Email já está em uso". Isso está correto.
+Você teve algumas falhas importantes nos testes base, principalmente relacionados a usuários, agentes e casos. Vou detalhar os principais grupos que falharam e o que pode estar causando essas falhas.
+
+---
+
+### 1. Falha: `'USERS: Recebe erro 400 ao tentar criar um usuário com e-mail já em uso'`
+
+**O que o teste espera:**  
+Ao tentar registrar um usuário com um email que já existe no banco, a API deve retornar status 400 com uma mensagem clara.
+
+**Análise no seu código:**  
+No seu `authController.js`, você tem esse trecho:
 
 ```js
 const usuarioExistente = await usuariosRepository.findByEmail(email);
@@ -42,139 +46,158 @@ if (usuarioExistente) {
 }
 ```
 
-- **Possível causa do erro:** O teste espera que o erro seja retornado exatamente com status 400 e a chave `"error"` no JSON. Você está fazendo isso, mas talvez o teste seja sensível a mensagens ou formatos exatos.  
-- **Sugestão:** Confira se a mensagem e o formato do JSON estão exatamente como o teste espera. Por exemplo, o teste pode esperar a mensagem exata "Email já está em uso" (que você já tem) e status 400. Se estiver tudo certo, veja se o banco está aplicando a restrição de unicidade corretamente (migration da tabela `usuarios` tem `email.unique()`), o que você fez.  
-- **Verificação extra:** Teste criando dois usuários com mesmo email via Postman ou Insomnia para ver o retorno exato. Pode ser que o erro esteja vindo do banco (violação de unicidade) e não capturado, causando erro 500 em vez de 400.
+Isso parece estar correto. Porém, a falha pode estar relacionada a algum problema no repositório ou na migration da tabela `usuarios`.
+
+**Verifique:**
+
+- Se a migration `001_create_usuarios_table.js` está aplicada corretamente, criando a coluna `email` com a constraint `unique()`.  
+- Se o banco realmente está impedindo duplicidade.  
+- Se o método `usuariosRepository.findByEmail(email)` está funcionando corretamente, retornando o usuário existente.
+
+Se a migration não estiver aplicada, ou o banco não estiver configurado para garantir unicidade, o teste pode estar passando um email duplicado e não receber o erro esperado.
 
 ---
 
-#### 2. **AGENTS: Diversos testes de criação, listagem, busca, atualização e deleção de agentes falharam**
+### 2. Falhas em Agentes e Casos (múltiplos testes)
 
-- Seu código para agentes está bem organizado, com validações detalhadas e tratamento de erros via helpers.  
-- **Possível causa:** Todos esses endpoints estão protegidos por autenticação JWT (middleware `authMiddleware`), o que é correto.  
-- **Porém:** Os testes falharam com status 401 quando o token JWT não foi fornecido. Isso indica que o middleware está funcionando, bloqueando acesso sem token.  
-- Se você está testando sem enviar o token, o erro está correto e esperado.  
-- **Por outro lado, se você enviou o token e ainda falhou:** Verifique se o token está sendo enviado corretamente no header `Authorization` como `Bearer <token>`.  
-- **Sugestão:** Use o token retornado na resposta do login e envie no header das requisições protegidas.  
-- Confirme também se o segredo JWT (`JWT_SECRET`) está definido no `.env` e carregado corretamente (você usa `dotenv`? No `server.js` não vi `require('dotenv').config()`, isso pode ser um problema).
+Você teve falhas em testes que verificam:
+
+- Criação, listagem, busca, atualização (PUT e PATCH) e deleção de agentes e casos.  
+- Retornos corretos de status codes (200, 201, 204, 400, 404).  
+- Validação de parâmetros (ex: ID deve ser inteiro positivo).  
+- Mensagens de erro customizadas.
+
+**Análise:**
+
+Seu código para agentes e casos está bem estruturado, com validações explícitas e uso de helpers para CRUD. Porém, os testes falharam em cenários que envolvem:
+
+- Payloads em formato incorreto.  
+- IDs inválidos ou inexistentes.  
+- Atualizações e deleções com status code e respostas corretas.
+
+**Possíveis causas:**
+
+- **Resposta incorreta no status code 204 para deleção:**  
+  No seu `agentesController.js` e `casosController.js`, você usa `handleDelete` dos helpers. Verifique se esses helpers retornam status 204 com corpo vazio. Se retornar 200 ou algum corpo JSON, o teste pode falhar.
+
+- **Validação de payload:**  
+  Se o seu validador não está cobrindo todos os casos de payload inválido, pode estar aceitando dados errados ou não retornando erro 400.
+
+- **Busca por ID inexistente:**  
+  Certifique-se que, ao buscar um agente ou caso por ID que não existe, retorna 404 com mensagem clara, e que o ID inválido (ex: string não numérica) retorna 400.
+
+- **Filtros e ordenação:**  
+  Alguns testes bônus falharam em filtragem e ordenação (ex: filtragem por status, agente, keywords). Seu código parece cobrir isso, mas erros sutis podem estar causando falha. Por exemplo, no `casosController.js` você converte o `status` para lowercase, mas talvez o banco tenha enum com case sensível.
 
 ---
 
-#### 3. **CASES: Falhas similares em criação, listagem, busca, atualização e deleção de casos**
+### 3. Falhas em Testes Bônus de Filtragem e Busca
 
-- A lógica do controller e repository para casos está bem feita, com validações e tratamento de erros.  
-- O middleware de autenticação protege as rotas `/casos`.  
-- Os erros 401 indicam que o token JWT não foi enviado ou está inválido.  
-- **Possível causa:** Mesma que para agentes: falta do token ou token mal formatado no header.  
-- **Sugestão:** Verifique se o token está sendo enviado corretamente no header `Authorization`.
+Você não passou testes bônus relacionados a:
+
+- Filtragem de casos por status, agente e keywords.  
+- Busca de agente responsável por caso.  
+- Filtragem de agentes por data de incorporação com ordenação.  
+- Endpoint `/usuarios/me`.
+
+**Análise:**
+
+- O endpoint `/usuarios/me` está implementado no `authController.js` e protegido pelo middleware, o que é ótimo. Mas o teste pode falhar se o retorno não estiver exatamente conforme esperado (ex: campos extras, nomes diferentes, etc).
+
+- A filtragem de casos e agentes pode estar com algum detalhe faltando, como não usar `whereILike` corretamente, ou não validar os parâmetros de consulta como esperado.
+
+- No `casosRepository.js`, o método `findWithFilters` parece estar correto, mas seria bom garantir que a query está sendo montada adequadamente para todos os filtros.
 
 ---
 
-### ⚠️ Problema comum detectado: Variáveis de ambiente e dotenv
+## 💡 Recomendações para Correção
 
-- Seu `server.js` não contém `require('dotenv').config()`. Isso é essencial para carregar as variáveis do arquivo `.env`, incluindo `JWT_SECRET` e `JWT_EXPIRES_IN`.
-- Sem isso, o JWT pode estar sendo gerado/verificado com `undefined` como segredo, o que invalida os tokens e impede autenticação correta.
-- **Exemplo do problema:**
+### Sobre a tabela de usuários e unicidade do email
+
+Confirme que a migration está aplicada e que a tabela `usuarios` tem a constraint `unique` no campo `email`. No seu arquivo `001_create_usuarios_table.js`:
 
 ```js
-// Falta essa linha no server.js
-require('dotenv').config();
+table.string('email').unique().notNullable();
 ```
 
-- Isso explica porque os tokens podem estar inválidos e causando erros 401 nos testes de agentes e casos.
+Se a migration não foi executada ou está com problema, faça:
+
+```bash
+npx knex migrate:latest
+```
+
+Para garantir que a tabela está atualizada.
+
+Se precisar, refaça a migration ou crie uma nova para adicionar a constraint.
 
 ---
 
-### 📋 Ajuste sugerido para o server.js
+### Sobre validações e respostas HTTP
 
-Adicione no topo do arquivo:
+Garanta que seus helpers de controller retornam os status corretos. Por exemplo, para deleção, o status deve ser `204 No Content` e o corpo vazio:
 
 ```js
-require('dotenv').config();
-const express = require('express');
-// resto do código...
+res.status(204).send();
 ```
 
----
-
-### 🔐 Observação sobre o token JWT no login
-
-No seu `authController.login`, você retorna o token com a chave `"acess_token"` (sem o segundo "c"):
-
-```js
-res.status(200).json({
-  acess_token: token
-});
-```
-
-No `INSTRUCTIONS.md` e no enunciado, o esperado é `"access_token"` (com dois "c"):
-
-```json
-{
-  "access_token": "token aqui"
-}
-```
-
-Essa pequena discrepância pode causar falha nos testes que esperam `"access_token"`.
-
-**Correção:**
-
-```js
-res.status(200).json({
-  access_token: token
-});
-```
+Se estiver retornando `res.status(200).json({ message: '...' })`, o teste pode falhar.
 
 ---
 
-### 💡 Sobre os testes bônus que falharam
+### Sobre filtros e ordenação
 
-Os testes bônus falharam principalmente em endpoints de filtragem e busca, mas seu código mostra que você implementou essas funcionalidades. Isso sugere que pode haver detalhes faltando, como:
+No seu `agentesController.js`, você tem validação para `sort` e `cargo`, mas no erro customizado a mensagem usa `'dataDeIncorporacao'` com maiúsculas, enquanto o teste pode esperar `datadeincorporacao` em minúsculas (sem camelCase). Atenção à consistência do nome do parâmetro.
 
-- Filtros sensíveis a maiúsculas/minúsculas (ex: status, cargo).
-- Parâmetros de query não tratados corretamente.
-- O formato exato da resposta pode não estar conforme esperado.
-
-Revisar os filtros no controller de casos e agentes para garantir que os parâmetros são normalizados (lowercase) e validados corretamente.
+No `casosController.js`, a filtragem por `status` e `agente_id` está correta, mas confirme que o banco aceita os valores em lowercase.
 
 ---
 
-### ✅ Resumo rápido dos principais pontos para foco e correção
+### Sobre o token JWT e variáveis de ambiente
 
-- [ ] **Adicione `require('dotenv').config()` no início do `server.js` para carregar as variáveis de ambiente corretamente.**
-- [ ] **Corrija a chave do token JWT no login de `"acess_token"` para `"access_token"` para atender o padrão esperado.**
-- [ ] **Teste a criação de usuários com email duplicado para garantir que o erro 400 seja retornado corretamente e a mensagem esteja conforme esperado.**
-- [ ] **Verifique se está enviando o token JWT corretamente no header `Authorization: Bearer <token>` nas requisições protegidas (agentes, casos, usuários).**
-- [ ] **Revise os filtros de query para agentes e casos, garantindo que os valores são normalizados e validados conforme esperado.**
-- [ ] **Teste manualmente os endpoints protegidos para garantir que o middleware de autenticação está funcionando e que o token é aceito.**
+Você está usando a variável `JWT_SECRET` corretamente, o que é ótimo. Só fique atento para não "hardcodar" o segredo no código.
 
 ---
 
-### 📚 Recursos recomendados para aprofundar
+## 📚 Recursos que Recomendo para Você
 
-- Para entender melhor o uso do `.env` e configuração do ambiente:  
-  https://www.youtube.com/watch?v=uEABDBQV-Ek&t=1s  
-- Para aprimorar o uso de JWT e autenticação com Node.js e Express:  
-  https://www.youtube.com/watch?v=Q4LQOfYwujk (Esse vídeo, feito pelos meus criadores, fala muito bem sobre conceitos básicos de autenticação e segurança)  
-  https://www.youtube.com/watch?v=keS0JWOypIU (JWT na prática)  
-  https://www.youtube.com/watch?v=L04Ln97AwoY (Uso combinado de JWT e bcrypt)  
-- Para melhorar a organização do projeto e arquitetura MVC:  
-  https://www.youtube.com/watch?v=bGN_xNc4A1k&t=3s  
+- Para entender melhor autenticação, JWT e bcrypt, veja este vídeo feito pelos meus criadores, que explica conceitos fundamentais e na prática:  
+  https://www.youtube.com/watch?v=Q4LQOfYwujk
 
----
+- Se quiser aprofundar no uso de JWT e como validar tokens:  
+  https://www.youtube.com/watch?v=keS0JWOypIU
 
-### Finalizando, Marco Fabian! 👏
+- Para aprimorar o uso do bcrypt e proteger senhas:  
+  https://www.youtube.com/watch?v=L04Ln97AwoY
 
-Você está muito próximo de uma aplicação robusta e segura! As pequenas correções que sugeri — especialmente sobre o carregamento das variáveis de ambiente e o nome da chave do token — vão destravar muitos testes e melhorar a experiência do usuário.
+- Para melhorar o uso do Knex e manipulação de banco de dados:  
+  https://www.youtube.com/watch?v=GLwHSs7t3Ns&t=4s
 
-Continue testando seus endpoints com ferramentas como Postman, Insomnia ou curl para garantir que o fluxo de registro, login, autenticação e acesso protegido está funcionando perfeitamente.
-
-Fique à vontade para perguntar se precisar de ajuda para entender algum ponto específico. Estou aqui para te ajudar a crescer como desenvolvedor! 🚀💙
+- Se precisar revisar a arquitetura MVC e organização do projeto Node.js:  
+  https://www.youtube.com/watch?v=bGN_xNc4A1k&t=3s
 
 ---
 
-Um abraço e sucesso no seu código!  
-Seu Code Buddy 🤖✨
+## 🔍 Resumo dos Principais Pontos para Focar
+
+- **Confirme a aplicação correta da migration que cria a tabela `usuarios` com `email` único.**  
+- **Garanta que o retorno de deleção (`DELETE`) seja `204 No Content` com corpo vazio.**  
+- **Reveja as mensagens e validações para filtros e parâmetros, especialmente nomes de campos e valores (ex: `dataDeIncorporacao` vs `datadeincorporacao`).**  
+- **Verifique se o método `usuariosRepository.findByEmail` funciona corretamente e retorna usuário existente para evitar duplicidade.**  
+- **Ajuste o endpoint `/usuarios/me` para retornar exatamente os campos esperados.**  
+- **Teste suas rotas protegidas com JWT para garantir que o token é verificado e o middleware funciona em todos os casos.**  
+- **Revise os detalhes dos filtros em `casos` e `agentes`, assegurando que a query está correta e que o banco entende os valores passados.**
+
+---
+
+Marco, você está no caminho certo! 💪 O desafio de autenticação e segurança é complexo e exige atenção a muitos detalhes, mas seu código mostra maturidade e organização.
+
+Continue focando nas validações, nas respostas HTTP corretas e no alinhamento com os requisitos do teste. Com esses ajustes, sua nota vai subir muito!
+
+Se precisar, volte aos vídeos que recomendei para reforçar os conceitos e a prática.
+
+Estou aqui torcendo pelo seu sucesso! 🚀✨
+
+Um abraço e até a próxima revisão!
 
 > Caso queira tirar uma dúvida específica, entre em contato com o Chapter no nosso [discord](https://discord.gg/DryuHVnz).
 
