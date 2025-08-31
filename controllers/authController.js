@@ -8,6 +8,16 @@ class AuthController {
     try {
       const { nome, email, senha } = req.body;
 
+      const allowedFields = ['nome', 'email', 'senha'];
+      const receivedFields = Object.keys(req.body);
+      const extraFields = receivedFields.filter(field => !allowedFields.includes(field));
+      
+      if (extraFields.length > 0) {
+        return res.status(400).json({
+          error: `Campo(s) extra(s) não permitido(s): ${extraFields.join(', ')}`
+        });
+      }
+
       // Validações básicas
       if (!nome || !email || !senha) {
         return res.status(400).json({

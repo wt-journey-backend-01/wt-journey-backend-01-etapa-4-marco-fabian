@@ -7,33 +7,37 @@ const casosRepository = require('../repositories/casosRepository');
 async function getAllAgentes(req, res, next) {
     try {
         const { cargo, sort } = req.query;
+        
+        const cargoParam = cargo ? cargo.toLowerCase() : undefined;
+        const sortParam = sort ? sort.toLowerCase() : undefined;
+        
         let agentes;
 
-        if (cargo) {
+        if (cargoParam) {
             const validCargos = ['inspetor', 'delegado'];
-            if (!validCargos.includes(cargo.toLowerCase())) {
+            if (!validCargos.includes(cargoParam)) {
                 throw createValidationError('Parâmetros inválidos', { 
                     cargo: "O campo 'cargo' deve ser 'inspetor' ou 'delegado'" 
                 });
             }
         }
 
-        if (sort) {
-            const validSortFields = ['dataDeIncorporacao', '-dataDeIncorporacao'];
-            if (!validSortFields.includes(sort)) {
+        if (sortParam) {
+            const validSortFields = ['datadeincorporacao', '-datadeincorporacao'];
+            if (!validSortFields.includes(sortParam)) {
                 throw createValidationError('Parâmetros inválidos', { 
                     sort: "O campo 'sort' deve ser 'dataDeIncorporacao' ou '-dataDeIncorporacao'" 
                 });
             }
         }
 
-        if (cargo && sort) {
-            const order = sort.startsWith('-') ? 'desc' : 'asc';
-            agentes = await agentesRepository.findByCargoSorted(cargo, order);
-        } else if (cargo) {
-            agentes = await agentesRepository.findByCargo(cargo);
-        } else if (sort) {
-            const order = sort.startsWith('-') ? 'desc' : 'asc';
+        if (cargoParam && sortParam) {
+            const order = sortParam.startsWith('-') ? 'desc' : 'asc';
+            agentes = await agentesRepository.findByCargoSorted(cargoParam, order);
+        } else if (cargoParam) {
+            agentes = await agentesRepository.findByCargo(cargoParam);
+        } else if (sortParam) {
+            const order = sortParam.startsWith('-') ? 'desc' : 'asc';
             agentes = await agentesRepository.findAllSorted(order);
         } else {
             agentes = await agentesRepository.findAll();
@@ -116,16 +120,6 @@ function deleteAgente(req, res, next) {
     handleDelete(agentesRepository, 'Agente', req, res, next);
 }
 
-module.exports = {
-    getAllAgentes,
-    getAgenteById,
-    createAgente,
-    updateAgente,
-    patchAgente,
-    deleteAgente,
-    getCasosByAgente,
-};
-
 async function getCasosByAgente(req, res, next) {
     try {
         const { id } = req.params;
@@ -143,3 +137,13 @@ async function getCasosByAgente(req, res, next) {
         next(error);
     }
 }
+
+module.exports = {
+    getAllAgentes,
+    getAgenteById,
+    createAgente,
+    updateAgente,
+    patchAgente,
+    deleteAgente,
+    getCasosByAgente,
+};

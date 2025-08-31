@@ -7,6 +7,9 @@ const { handleCreate, handleUpdate, handlePatch, handleGetById, handleDelete } =
 async function getAllCasos(req, res, next) {
     try {
         const { agente_id, status, q } = req.query;
+        
+        const statusParam = status ? status.toLowerCase() : undefined;
+        
         let casos;
 
         if (agente_id !== undefined) {
@@ -16,9 +19,9 @@ async function getAllCasos(req, res, next) {
             }
         }
 
-        if (status) {
+        if (statusParam) {
             const validStatusValues = ['aberto', 'solucionado'];
-            if (!validStatusValues.includes(status.toLowerCase())) {
+            if (!validStatusValues.includes(statusParam)) {
                 throw createValidationError('Parâmetros inválidos', { 
                     status: "O campo 'status' deve ser 'aberto' ou 'solucionado'" 
                 });
@@ -26,7 +29,7 @@ async function getAllCasos(req, res, next) {
         }
 
         const parsedId = agente_id !== undefined ? Number(agente_id) : undefined;
-        casos = await casosRepository.findWithFilters({ agente_id: parsedId, status, q });
+        casos = await casosRepository.findWithFilters({ agente_id: parsedId, status: statusParam, q });
 
         res.status(200).json(casos);
     } catch (error) {
@@ -66,7 +69,9 @@ async function getAgenteFromCaso(req, res, next) {
 
 function createCaso(req, res, next) {
     const validateCreate = async (dados) => {
-        if (dados.status) dados.status = String(dados.status).toLowerCase();
+        if (dados.status) {
+            dados.status = String(dados.status).toLowerCase();
+        }
         await validateCasoData(dados, agentesRepository, false);
     };
     handleCreate(casosRepository, validateCreate, req, res, next);
