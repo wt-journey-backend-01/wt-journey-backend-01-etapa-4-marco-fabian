@@ -23,6 +23,11 @@ const idSchema = z.object({
   id: z.string().regex(/^\d+$/, "ID deve ser um número").transform(Number)
 }).strict();
 
+// Schema para caso_id (parâmetro de rota específico para casos)
+const casoIdSchema = z.object({
+  caso_id: z.string().regex(/^\d+$/, "caso_id deve ser um número").transform(Number)
+}).strict();
+
 // Schema para criação de agente
 const agenteSchema = z.object({
   nome: z.string().min(1, "Nome é obrigatório").trim(),
@@ -59,6 +64,7 @@ module.exports = {
   usuarioRegSchema,
   usuarioLoginSchema,
   idSchema,
+  casoIdSchema,
   agenteSchema,
   casoSchema,
   agentesQuerySchema,

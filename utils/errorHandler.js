@@ -1,7 +1,7 @@
 class APIError extends Error {
-  constructor(status, message, errors) {
+  constructor(message, statusCode = 500, errors = null) {
     super(message);
-    this.status = status;
+    this.statusCode = statusCode;
     this.message = message;
     this.errors = errors;
     this.isOperational = true;
@@ -11,97 +11,97 @@ class APIError extends Error {
 
 class InvalidIdError extends APIError {
   constructor(errors) {
-    super(400, "ID inválido", errors);
+    super("ID inválido", 400, errors);
   }
 }
 
 class IdNotFoundError extends APIError {
   constructor(errors) {
-    super(404, "ID inexistente", errors);
+    super("ID inexistente", 404, errors);
   }
 }
 
 class InvalidFormatError extends APIError {
   constructor(errors) {
-    super(400, "Parâmetros inválidos", errors);
+    super("Parâmetros inválidos", 400, errors);
   }
 }
 
 class InvalidQueryError extends APIError {
   constructor(errors) {
-    super(400, "Query inválida", errors);
+    super("Query inválida", 400, errors);
   }
 }
 
 class NotFoundRouteError extends APIError {
   constructor(errors) {
-    super(404, "Endpoint inexistente", errors);
+    super("Endpoint inexistente", 404, errors);
   }
 }
 
 class EmailExistsError extends APIError {
   constructor(errors) {
-    super(400, "Email existente", errors);
+    super("Email já está em uso", 409, errors);
   }
 }
 
 class UserNotFoundError extends APIError {
   constructor(errors) {
-    super(401, "Usuário não encontrado", errors);
+    super("Usuário não encontrado", 401, errors);
   }
 }
 
 class InvalidPasswordError extends APIError {
   constructor(errors) {
-    super(401, "Senha inválida", errors);
+    super("Senha inválida", 401, errors);
   }
 }
 
 class TokenError extends APIError {
   constructor(errors) {
-    super(401, "Token inválido", errors);
+    super("Token inválido", 401, errors);
   }
 }
 
 class ValidationError extends APIError {
   constructor(errors) {
-    super(400, "Dados inválidos", errors);
+    super("Dados inválidos", 400, errors);
   }
 }
 
 class RequiredFieldError extends APIError {
   constructor(errors) {
-    super(400, "Campos obrigatórios", errors);
+    super("Campos obrigatórios", 400, errors);
   }
 }
 
 class DateValidationError extends APIError {
   constructor(errors) {
-    super(400, "Data inválida", errors);
+    super("Data inválida", 400, errors);
   }
 }
 
 class CargoValidationError extends APIError {
   constructor(errors) {
-    super(400, "Cargo inválido", errors);
+    super("Cargo inválido", 400, errors);
   }
 }
 
 class StatusValidationError extends APIError {
   constructor(errors) {
-    super(400, "Status inválido", errors);
+    super("Status inválido", 400, errors);
   }
 }
 
 class AgenteNotFoundError extends APIError {
   constructor(errors) {
-    super(404, "Agente não encontrado", errors);
+    super("Agente não encontrado", 404, errors);
   }
 }
 
 class CasoNotFoundError extends APIError {
   constructor(errors) {
-    super(404, "Caso não encontrado", errors);
+    super("Caso não encontrado", 404, errors);
   }
 }
 
@@ -110,7 +110,7 @@ function errorHandler(err, req, res, next) {
 
   if (err.isOperational) {
     const response = {
-      status: err.status,
+      status: err.statusCode,
       message: err.message
     };
 
@@ -118,7 +118,7 @@ function errorHandler(err, req, res, next) {
       response.errors = err.errors;
     }
 
-    return res.status(err.status).json(response);
+    return res.status(err.statusCode).json(response);
   }
 
   res.status(500).json({

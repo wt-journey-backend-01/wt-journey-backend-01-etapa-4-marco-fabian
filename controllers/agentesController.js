@@ -27,13 +27,17 @@ async function getAllAgentes(req, res, next) {
         
         let agentes;
 
-        if (cargo && sort) {
-            const order = sort.startsWith('-') ? 'desc' : 'asc';
-            agentes = await agentesRepository.findByCargoSorted(cargo, order);
-        } else if (cargo) {
-            agentes = await agentesRepository.findByCargo(cargo);
-        } else if (sort) {
-            const order = sort.startsWith('-') ? 'desc' : 'asc';
+        // Converter e validar parâmetros
+        const cargoParam = cargo ? cargo.toLowerCase() : undefined;
+        const sortParam = sort ? sort.toLowerCase() : undefined;
+
+        if (cargoParam && sortParam) {
+            const order = sortParam.startsWith('-') ? 'desc' : 'asc';
+            agentes = await agentesRepository.findByCargoSorted(cargoParam, order);
+        } else if (cargoParam) {
+            agentes = await agentesRepository.findByCargo(cargoParam);
+        } else if (sortParam) {
+            const order = sortParam.startsWith('-') ? 'desc' : 'asc';
             agentes = await agentesRepository.findAllSorted(order);
         } else {
             agentes = await agentesRepository.findAll();

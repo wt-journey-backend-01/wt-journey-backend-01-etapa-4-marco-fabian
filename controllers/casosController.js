@@ -10,7 +10,8 @@ const {
 const { 
   casoSchema, 
   casosQuerySchema, 
-  idSchema 
+  idSchema,
+  casoIdSchema 
 } = require('../utils/schemas');
 const { handleCreate, handleUpdate, handlePatch, handleGetById, handleDelete } = require('../utils/controllerHelpers');
 
@@ -27,13 +28,13 @@ async function getAllCasos(req, res, next) {
         
         let casos;
 
-        if (agente_id !== undefined) {
-            const parsed = Number(agente_id);
-            if (!Number.isInteger(parsed) || parsed <= 0) {
-                throw new ValidationError({ 
-                    agente_id: 'agente_id deve ser um inteiro positivo' 
-                });
-            }
+        // Converter agente_id de string para número, conforme especificado na dúvida
+        const parsedAgenteId = agente_id ? Number(agente_id) : null;
+        
+        if (parsedAgenteId !== null && (!Number.isInteger(parsedAgenteId) || parsedAgenteId <= 0)) {
+            throw new ValidationError({ 
+                agente_id: 'agente_id deve ser um inteiro positivo' 
+            });
         }
 
         if (status) {
@@ -45,8 +46,11 @@ async function getAllCasos(req, res, next) {
             }
         }
 
-        const parsedId = agente_id !== undefined ? Number(agente_id) : undefined;
-        casos = await casosRepository.findWithFilters({ agente_id: parsedId, status, q });
+        casos = await casosRepository.findWithFilters({ 
+            agente_id: parsedAgenteId, 
+            status, 
+            q 
+        });
 
         res.status(200).json(casos);
     } catch (error) {
@@ -57,13 +61,13 @@ async function getAllCasos(req, res, next) {
 async function getCasoById(req, res, next) {
     try {
         // Validar ID com Zod
-        const idParse = idSchema.safeParse(req.params);
+        const idParse = casoIdSchema.safeParse(req.params);
         if (!idParse.success) {
             const { fieldErrors } = idParse.error.flatten();
             throw new ValidationError(fieldErrors);
         }
 
-        const { id } = idParse.data;
+        const { caso_id } = idParse.data;
         await handleGetById(casosRepository, 'Caso', req, res, next);
     } catch (error) {
         next(error);
@@ -73,13 +77,13 @@ async function getCasoById(req, res, next) {
 async function getAgenteFromCaso(req, res, next) {
     try {
         // Validar ID com Zod
-        const idParse = idSchema.safeParse(req.params);
+        const idParse = casoIdSchema.safeParse(req.params);
         if (!idParse.success) {
             const { fieldErrors } = idParse.error.flatten();
             throw new ValidationError(fieldErrors);
         }
 
-        const { id: caso_id } = idParse.data;
+        const { caso_id } = idParse.data;
         
         const caso = await casosRepository.findById(caso_id);
         if (!caso) {
