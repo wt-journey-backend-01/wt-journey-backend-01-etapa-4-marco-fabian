@@ -38,30 +38,28 @@ const authMiddleware = (req, res, next) => {
       });
     }
 
-    // Verificar e decodificar o token
-    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
-      if (err) {
-        if (err.name === 'TokenExpiredError') {
-          throw new TokenError({
-            token: 'Token expirado'
-          });
-        }
-        
-        if (err.name === 'JsonWebTokenError') {
-          throw new TokenError({
-            token: 'Token inválido'
-          });
-        }
-
+    // Verificar e decodificar o token (versão síncrona)
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      req.user = decoded;
+      next();
+    } catch (jwtError) {
+      if (jwtError.name === 'TokenExpiredError') {
+        throw new TokenError({
+          token: 'Token expirado'
+        });
+      }
+      
+      if (jwtError.name === 'JsonWebTokenError') {
         throw new TokenError({
           token: 'Token inválido'
         });
       }
 
-      // Adicionar os dados do usuário ao request
-      req.user = decoded;
-      next();
-    });
+      throw new TokenError({
+        token: 'Token inválido'
+      });
+    }
   } catch (error) {
     console.error('Erro no middleware de autenticação:', error);
     return next(error);

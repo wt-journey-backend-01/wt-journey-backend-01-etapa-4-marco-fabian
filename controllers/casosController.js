@@ -54,7 +54,7 @@ async function getAllCasos(req, res, next) {
     }
 }
 
-function getCasoById(req, res, next) {
+async function getCasoById(req, res, next) {
     try {
         // Validar ID com Zod
         const idParse = idSchema.safeParse(req.params);
@@ -64,7 +64,7 @@ function getCasoById(req, res, next) {
         }
 
         const { id } = idParse.data;
-        handleGetById(casosRepository, 'Caso', req, res, next);
+        await handleGetById(casosRepository, 'Caso', req, res, next);
     } catch (error) {
         next(error);
     }
@@ -101,7 +101,7 @@ async function getAgenteFromCaso(req, res, next) {
     }
 }
 
-function createCaso(req, res, next) {
+async function createCaso(req, res, next) {
     try {
         // Validar dados com Zod
         const bodyParse = casoSchema.safeParse(req.body);
@@ -120,13 +120,13 @@ function createCaso(req, res, next) {
             dados.status = String(dados.status).toLowerCase();
         }
 
-        handleCreate(casosRepository, () => {}, req, res, next);
+        await handleCreate(casosRepository, () => {}, req, res, next);
     } catch (error) {
         next(error);
     }
 }
 
-function updateCaso(req, res, next) {
+async function updateCaso(req, res, next) {
     try {
         // Validar ID com Zod
         const idParse = idSchema.safeParse(req.params);
@@ -152,13 +152,13 @@ function updateCaso(req, res, next) {
             dados.status = String(dados.status).toLowerCase();
         }
 
-        handleUpdate(casosRepository, () => {}, req, res, next);
+        await handleUpdate(casosRepository, () => {}, req, res, next);
     } catch (error) {
         next(error);
     }
 }
 
-function patchCaso(req, res, next) {
+async function patchCaso(req, res, next) {
     try {
         // Validar ID com Zod
         const idParse = idSchema.safeParse(req.params);
@@ -192,13 +192,13 @@ function patchCaso(req, res, next) {
             throw new ValidationError(errors);
         }
 
-        handlePatch(casosRepository, () => {}, req, res, next);
+        await handlePatch(casosRepository, () => {}, req, res, next);
     } catch (error) {
         next(error);
     }
 }
 
-function deleteCaso(req, res, next) {
+async function deleteCaso(req, res, next) {
     try {
         // Validar ID com Zod
         const idParse = idSchema.safeParse(req.params);
@@ -208,7 +208,7 @@ function deleteCaso(req, res, next) {
         }
 
         const { id } = idParse.data;
-        handleDelete(casosRepository, 'Caso', req, res, next);
+        await handleDelete(casosRepository, 'Caso', req, res, next);
     } catch (error) {
         next(error);
     }

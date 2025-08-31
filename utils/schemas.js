@@ -10,18 +10,18 @@ const usuarioRegSchema = z.object({
     .regex(/[A-Z]/, "Senha deve conter pelo menos uma letra maiúscula")
     .regex(/\d/, "Senha deve conter pelo menos um número")
     .regex(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/, "Senha deve conter pelo menos um caractere especial")
-});
+}).strict();
 
 // Schema para login de usuário
 const usuarioLoginSchema = z.object({
   email: z.string().email("Email deve ser válido").trim(),
   senha: z.string().min(1, "Senha é obrigatória")
-});
+}).strict();
 
 // Schema para ID (parâmetro de rota)
 const idSchema = z.object({
   id: z.string().regex(/^\d+$/, "ID deve ser um número").transform(Number)
-});
+}).strict();
 
 // Schema para criação de agente
 const agenteSchema = z.object({
@@ -30,7 +30,7 @@ const agenteSchema = z.object({
   cargo: z.enum(["inspetor", "delegado"], {
     errorMap: () => ({ message: "Cargo deve ser 'inspetor' ou 'delegado'" })
   })
-});
+}).strict();
 
 // Schema para criação de caso
 const casoSchema = z.object({
@@ -40,20 +40,20 @@ const casoSchema = z.object({
     errorMap: () => ({ message: "Status deve ser 'aberto' ou 'solucionado'" })
   }),
   agente_id: z.number().int().positive("agente_id deve ser um número inteiro positivo")
-});
+}).strict();
 
 // Schema para query parameters de agentes
 const agentesQuerySchema = z.object({
   cargo: z.enum(["inspetor", "delegado"]).optional(),
   sort: z.enum(["datadeincorporacao", "-datadeincorporacao"]).optional()
-});
+}).strict();
 
 // Schema para query parameters de casos
 const casosQuerySchema = z.object({
   agente_id: z.string().regex(/^\d+$/, "agente_id deve ser um número").transform(Number).optional(),
   status: z.enum(["aberto", "solucionado"]).optional(),
   q: z.string().optional()
-});
+}).strict();
 
 module.exports = {
   usuarioRegSchema,

@@ -12,6 +12,7 @@ const {
   agentesQuerySchema, 
   idSchema 
 } = require('../utils/schemas');
+const { handleCreate, handleUpdate, handlePatch, handleGetById, handleDelete } = require('../utils/controllerHelpers');
 
 async function getAllAgentes(req, res, next) {
     try {
@@ -44,7 +45,7 @@ async function getAllAgentes(req, res, next) {
     }
 }
 
-function getAgenteById(req, res, next) {
+async function getAgenteById(req, res, next) {
     try {
         // Validar ID com Zod
         const idParse = idSchema.safeParse(req.params);
@@ -54,13 +55,13 @@ function getAgenteById(req, res, next) {
         }
 
         const { id } = idParse.data;
-        handleGetById(agentesRepository, 'Agente', req, res, next);
+        await handleGetById(agentesRepository, 'Agente', req, res, next);
     } catch (error) {
         next(error);
     }
 }
 
-function createAgente(req, res, next) {
+async function createAgente(req, res, next) {
     try {
         // Validar dados com Zod
         const bodyParse = agenteSchema.safeParse(req.body);
@@ -86,13 +87,13 @@ function createAgente(req, res, next) {
             });
         }
 
-        handleCreate(agentesRepository, () => {}, req, res, next);
+        await handleCreate(agentesRepository, () => {}, req, res, next);
     } catch (error) {
         next(error);
     }
 }
 
-function updateAgente(req, res, next) {
+async function updateAgente(req, res, next) {
     try {
         // Validar ID com Zod
         const idParse = idSchema.safeParse(req.params);
@@ -125,13 +126,13 @@ function updateAgente(req, res, next) {
             });
         }
 
-        handleUpdate(agentesRepository, () => {}, req, res, next);
+        await handleUpdate(agentesRepository, () => {}, req, res, next);
     } catch (error) {
         next(error);
     }
 }
 
-function patchAgente(req, res, next) {
+async function patchAgente(req, res, next) {
     try {
         // Validar ID com Zod
         const idParse = idSchema.safeParse(req.params);
@@ -168,13 +169,13 @@ function patchAgente(req, res, next) {
             throw new ValidationError(errors);
         }
 
-        handlePatch(agentesRepository, () => {}, req, res, next);
+        await handlePatch(agentesRepository, () => {}, req, res, next);
     } catch (error) {
         next(error);
     }
 }
 
-function deleteAgente(req, res, next) {
+async function deleteAgente(req, res, next) {
     try {
         // Validar ID com Zod
         const idParse = idSchema.safeParse(req.params);
@@ -184,7 +185,7 @@ function deleteAgente(req, res, next) {
         }
 
         const { id } = idParse.data;
-        handleDelete(agentesRepository, 'Agente', req, res, next);
+        await handleDelete(agentesRepository, 'Agente', req, res, next);
     } catch (error) {
         next(error);
     }
