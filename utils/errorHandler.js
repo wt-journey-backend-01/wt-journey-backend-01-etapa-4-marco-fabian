@@ -41,7 +41,7 @@ class NotFoundRouteError extends APIError {
 
 class EmailExistsError extends APIError {
   constructor(errors) {
-    super("Email já está em uso", 409, errors);
+    super("Email já está em uso", 400, errors);
   }
 }
 

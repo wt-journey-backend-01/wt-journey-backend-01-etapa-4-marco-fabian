@@ -16,7 +16,6 @@ const { handleCreate, handleUpdate, handlePatch, handleGetById, handleDelete } =
 
 async function getAllAgentes(req, res, next) {
     try {
-        // Validar query parameters com Zod
         const queryParse = agentesQuerySchema.safeParse(req.query);
         if (!queryParse.success) {
             const { fieldErrors } = queryParse.error.flatten();
@@ -27,7 +26,6 @@ async function getAllAgentes(req, res, next) {
         
         let agentes;
 
-        // Converter e validar parâmetros
         const cargoParam = cargo ? cargo.toLowerCase() : undefined;
         const sortParam = sort ? sort.toLowerCase() : undefined;
 
@@ -51,14 +49,6 @@ async function getAllAgentes(req, res, next) {
 
 async function getAgenteById(req, res, next) {
     try {
-        // Validar ID com Zod
-        const idParse = idSchema.safeParse(req.params);
-        if (!idParse.success) {
-            const { fieldErrors } = idParse.error.flatten();
-            throw new ValidationError(fieldErrors);
-        }
-
-        const { id } = idParse.data;
         await handleGetById(agentesRepository, 'Agente', req, res, next);
     } catch (error) {
         next(error);
@@ -67,7 +57,6 @@ async function getAgenteById(req, res, next) {
 
 async function createAgente(req, res, next) {
     try {
-        // Validar dados com Zod
         const bodyParse = agenteSchema.safeParse(req.body);
         if (!bodyParse.success) {
             const { formErrors, fieldErrors } = bodyParse.error.flatten();
@@ -79,7 +68,6 @@ async function createAgente(req, res, next) {
 
         const dados = bodyParse.data;
         
-        // Validação adicional de data
         const data = new Date(dados.dataDeIncorporacao);
         const hoje = new Date();
         const dataStr = data.toISOString().split('T')[0];
@@ -91,6 +79,7 @@ async function createAgente(req, res, next) {
             });
         }
 
+        req.body = dados;
         await handleCreate(agentesRepository, null, req, res, next);
     } catch (error) {
         next(error);
@@ -99,14 +88,6 @@ async function createAgente(req, res, next) {
 
 async function updateAgente(req, res, next) {
     try {
-        // Validar ID com Zod
-        const idParse = idSchema.safeParse(req.params);
-        if (!idParse.success) {
-            const { fieldErrors } = idParse.error.flatten();
-            throw new ValidationError(fieldErrors);
-        }
-
-        // Validar dados com Zod
         const bodyParse = agenteSchema.safeParse(req.body);
         if (!bodyParse.success) {
             const { formErrors, fieldErrors } = bodyParse.error.flatten();
@@ -118,7 +99,6 @@ async function updateAgente(req, res, next) {
 
         const dados = bodyParse.data;
         
-        // Validação adicional de data
         const data = new Date(dados.dataDeIncorporacao);
         const hoje = new Date();
         const dataStr = data.toISOString().split('T')[0];
@@ -130,6 +110,7 @@ async function updateAgente(req, res, next) {
             });
         }
 
+        req.body = dados;
         await handleUpdate(agentesRepository, null, req, res, next);
     } catch (error) {
         next(error);
@@ -138,16 +119,8 @@ async function updateAgente(req, res, next) {
 
 async function patchAgente(req, res, next) {
     try {
-        // Validar ID com Zod
-        const idParse = idSchema.safeParse(req.params);
-        if (!idParse.success) {
-            const { fieldErrors } = idParse.error.flatten();
-            throw new ValidationError(fieldErrors);
-        }
-
-        const { id } = idParse.data;
+        const { id } = req.params;
         
-        // Validar dados parciais
         const dados = req.body;
         const errors = {};
         
@@ -173,6 +146,7 @@ async function patchAgente(req, res, next) {
             throw new ValidationError(errors);
         }
 
+        req.body = dados;
         await handlePatch(agentesRepository, null, req, res, next);
     } catch (error) {
         next(error);
@@ -181,14 +155,6 @@ async function patchAgente(req, res, next) {
 
 async function deleteAgente(req, res, next) {
     try {
-        // Validar ID com Zod
-        const idParse = idSchema.safeParse(req.params);
-        if (!idParse.success) {
-            const { fieldErrors } = idParse.error.flatten();
-            throw new ValidationError(fieldErrors);
-        }
-
-        const { id } = idParse.data;
         await handleDelete(agentesRepository, 'Agente', req, res, next);
     } catch (error) {
         next(error);
@@ -197,14 +163,7 @@ async function deleteAgente(req, res, next) {
 
 async function getCasosByAgente(req, res, next) {
     try {
-        // Validar ID com Zod
-        const idParse = idSchema.safeParse(req.params);
-        if (!idParse.success) {
-            const { fieldErrors } = idParse.error.flatten();
-            throw new ValidationError(fieldErrors);
-        }
-
-        const { id } = idParse.data;
+        const { id } = req.params;
         
         const agente = await agentesRepository.findById(id);
         if (!agente) {

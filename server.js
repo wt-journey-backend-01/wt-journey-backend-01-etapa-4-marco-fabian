@@ -18,8 +18,8 @@ app.use('/docs', swaggerUi.serve, swaggerUi.setup(specs));
 app.use('/auth', authRoutes);
 
 // Rotas protegidas (precisam de autenticação)
-app.use('/agentes', authMiddleware, agentesRoutes);
-app.use('/casos', authMiddleware, casosRoutes);
+app.use('/agentes', agentesRoutes);
+app.use('/casos', casosRoutes);
 
 app.use(errorHandler);
 

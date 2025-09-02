@@ -1,13 +1,44 @@
 const express = require('express');
 const router = express.Router();
 const casosController = require('../controllers/casosController');
+const authMiddleware = require('../middlewares/authMiddleware');
+const { idSchema } = require('../utils/schemas');
+const { ValidationError } = require('../utils/errorHandler');
 
-router.get('/', casosController.getAllCasos);
-router.get('/:id', casosController.getCasoById);
-router.get('/:caso_id/agente', casosController.getAgenteFromCaso);
-router.post('/', casosController.createCaso);
-router.put('/:id', casosController.updateCaso);
-router.patch('/:id', casosController.patchCaso);
-router.delete('/:id', casosController.deleteCaso);
+// Middleware para validar parâmetros antes da autenticação
+const validateParams = (req, res, next) => {
+  try {
+    // Validar parâmetro ID se existir
+    if (req.params.id) {
+      const idParse = idSchema.safeParse({ id: req.params.id });
+      if (!idParse.success) {
+        const { fieldErrors } = idParse.error.flatten();
+        throw new ValidationError(fieldErrors);
+      }
+    }
+
+    // Validar parâmetro caso_id se existir
+    if (req.params.caso_id) {
+      const casoIdParse = idSchema.safeParse({ id: req.params.caso_id });
+      if (!casoIdParse.success) {
+        const { fieldErrors } = casoIdParse.error.flatten();
+        throw new ValidationError(fieldErrors);
+      }
+    }
+
+    // Se a validação passou, continua para autenticação
+    authMiddleware(req, res, next);
+  } catch (error) {
+    next(error);
+  }
+};
+
+router.get('/', authMiddleware, casosController.getAllCasos);
+router.get('/:id', validateParams, casosController.getCasoById);
+router.get('/:caso_id/agente', validateParams, casosController.getAgenteFromCaso);
+router.post('/', authMiddleware, casosController.createCaso);
+router.put('/:id', validateParams, casosController.updateCaso);
+router.patch('/:id', validateParams, casosController.patchCaso);
+router.delete('/:id', validateParams, casosController.deleteCaso);
 
 module.exports = router; 

@@ -1,9 +1,3 @@
-// Update with your config settings.
-
-/**
- * @type { Object.<string, import("knex").Knex.Config> }
- */
-
 require('dotenv').config();
 
 module.exports = {
@@ -40,6 +34,15 @@ module.exports = {
     seeds: {
       directory: './db/seeds',
     },
+    pool: {
+      min: 2,
+      max: 10,
+      createTimeoutMillis: 3000,
+      acquireTimeoutMillis: 30000,
+      idleTimeoutMillis: 30000,
+      reapIntervalMillis: 1000,
+      createRetryIntervalMillis: 100,
+    },
   },
 
   ci: {
@@ -57,23 +60,41 @@ module.exports = {
     seeds: {
       directory: './db/seeds',
     },
+    pool: {
+      min: 2,
+      max: 10,
+      createTimeoutMillis: 3000,
+      acquireTimeoutMillis: 30000,
+      idleTimeoutMillis: 30000,
+      reapIntervalMillis: 1000,
+      createRetryIntervalMillis: 100,
+    },
   },
 
-  // Configuração específica para o autograder
+
   autograder: {
     client: 'pg',
     connection: {
       host: process.env.POSTGRES_HOST || '127.0.0.1',
       port: process.env.POSTGRES_PORT || 5432,
-      user: 'postgres', // Força o uso de postgres
-      password: 'postgres', // Força o uso de postgres
-      database: 'policia_db', // Força o uso de policia_db
+      user: process.env.POSTGRES_USER || 'postgres',
+      password: process.env.POSTGRES_PASSWORD || 'postgres',
+      database: process.env.POSTGRES_DB || 'policia_db',
     },
     migrations: {
       directory: './db/migrations',
     },
     seeds: {
       directory: './db/seeds',
+    },
+    pool: {
+      min: 2,
+      max: 10,
+      createTimeoutMillis: 3000,
+      acquireTimeoutMillis: 30000,
+      idleTimeoutMillis: 30000,
+      reapIntervalMillis: 1000,
+      createRetryIntervalMillis: 100,
     },
   }
 

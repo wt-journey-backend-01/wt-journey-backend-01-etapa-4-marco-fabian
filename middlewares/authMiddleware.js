@@ -40,7 +40,7 @@ const authMiddleware = (req, res, next) => {
 
     // Verificar e decodificar o token (versão síncrona)
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || "segredo");
       req.user = decoded;
       next();
     } catch (jwtError) {

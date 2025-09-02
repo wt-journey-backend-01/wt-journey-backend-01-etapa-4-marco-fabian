@@ -16,7 +16,6 @@ const {
 class AuthController {
   async register(req, res, next) {
     try {
-      // Validar dados com Zod
       const bodyParse = usuarioRegSchema.safeParse(req.body);
       if (!bodyParse.success) {
         const { formErrors, fieldErrors } = bodyParse.error.flatten();
@@ -28,7 +27,6 @@ class AuthController {
 
       const { nome, email, senha } = bodyParse.data;
 
-      // Verificar se o email já existe
       const usuarioExistente = await usuariosRepository.findByEmail(email);
       if (usuarioExistente) {
         throw new EmailExistsError({
@@ -36,11 +34,9 @@ class AuthController {
         });
       }
 
-      // Hash da senha
       const saltRounds = 10;
       const senhaHash = await bcrypt.hash(senha, saltRounds);
 
-      // Criar usuário
       const usuario = await usuariosRepository.create({
         nome,
         email,
@@ -62,7 +58,6 @@ class AuthController {
 
   async login(req, res, next) {
     try {
-      // Validar dados com Zod
       const bodyParse = usuarioLoginSchema.safeParse(req.body);
       if (!bodyParse.success) {
         const { formErrors, fieldErrors } = bodyParse.error.flatten();
@@ -74,7 +69,6 @@ class AuthController {
 
       const { email, senha } = bodyParse.data;
 
-      // Buscar usuário por email
       const usuario = await usuariosRepository.findByEmail(email);
       if (!usuario) {
         throw new UserNotFoundError({
@@ -82,7 +76,6 @@ class AuthController {
         });
       }
 
-      // Verificar senha
       const senhaValida = await bcrypt.compare(senha, usuario.senha);
       if (!senhaValida) {
         throw new InvalidPasswordError({
@@ -90,14 +83,13 @@ class AuthController {
         });
       }
 
-      // Gerar token JWT
       const token = jwt.sign(
-        { 
-          id: usuario.id, 
+        {
+          id: usuario.id,
           email: usuario.email,
           nome: usuario.nome
         },
-        process.env.JWT_SECRET,
+        process.env.JWT_SECRET || "segredo",
         { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
       );
 
@@ -111,8 +103,6 @@ class AuthController {
 
   async logout(req, res, next) {
     try {
-      // Em uma implementação real, você poderia invalidar o token
-      // Por enquanto, apenas retornamos sucesso
       res.status(200).json({
         message: 'Logout realizado com sucesso'
       });
@@ -132,7 +122,6 @@ class AuthController {
 
   async deleteUser(req, res, next) {
     try {
-      // Validar ID com Zod
       const idParse = idSchema.safeParse(req.params);
       if (!idParse.success) {
         const { fieldErrors } = idParse.error.flatten();

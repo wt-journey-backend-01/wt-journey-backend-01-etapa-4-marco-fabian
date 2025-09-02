@@ -17,7 +17,6 @@ const { handleCreate, handleUpdate, handlePatch, handleGetById, handleDelete } =
 
 async function getAllCasos(req, res, next) {
     try {
-        // Validar query parameters com Zod
         const queryParse = casosQuerySchema.safeParse(req.query);
         if (!queryParse.success) {
             const { fieldErrors } = queryParse.error.flatten();
@@ -28,7 +27,6 @@ async function getAllCasos(req, res, next) {
         
         let casos;
 
-        // Converter agente_id de string para número, conforme especificado na dúvida
         const parsedAgenteId = agente_id ? Number(agente_id) : null;
         
         if (parsedAgenteId !== null && (!Number.isInteger(parsedAgenteId) || parsedAgenteId <= 0)) {
@@ -60,14 +58,6 @@ async function getAllCasos(req, res, next) {
 
 async function getCasoById(req, res, next) {
     try {
-        // Validar ID com Zod
-        const idParse = casoIdSchema.safeParse(req.params);
-        if (!idParse.success) {
-            const { fieldErrors } = idParse.error.flatten();
-            throw new ValidationError(fieldErrors);
-        }
-
-        const { caso_id } = idParse.data;
         await handleGetById(casosRepository, 'Caso', req, res, next);
     } catch (error) {
         next(error);
@@ -76,29 +66,22 @@ async function getCasoById(req, res, next) {
 
 async function getAgenteFromCaso(req, res, next) {
     try {
-        // Validar ID com Zod
-        const idParse = casoIdSchema.safeParse(req.params);
-        if (!idParse.success) {
-            const { fieldErrors } = idParse.error.flatten();
-            throw new ValidationError(fieldErrors);
-        }
+        const { caso_id } = req.params;
 
-        const { caso_id } = idParse.data;
-        
         const caso = await casosRepository.findById(caso_id);
         if (!caso) {
             throw new CasoNotFoundError({
                 caso: 'Caso não encontrado'
             });
         }
-        
+
         const agente = await agentesRepository.findById(caso.agente_id);
         if (!agente) {
             throw new AgenteNotFoundError({
                 agente: 'Agente responsável não encontrado'
             });
         }
-        
+
         res.status(200).json(agente);
     } catch (error) {
         next(error);
@@ -107,7 +90,6 @@ async function getAgenteFromCaso(req, res, next) {
 
 async function createCaso(req, res, next) {
     try {
-        // Validar dados com Zod
         const bodyParse = casoSchema.safeParse(req.body);
         if (!bodyParse.success) {
             const { formErrors, fieldErrors } = bodyParse.error.flatten();
@@ -119,11 +101,11 @@ async function createCaso(req, res, next) {
 
         const dados = bodyParse.data;
         
-        // Normalizar status para lowercase
         if (dados.status) {
             dados.status = String(dados.status).toLowerCase();
         }
 
+        req.body = dados;
         await handleCreate(casosRepository, null, req, res, next);
     } catch (error) {
         next(error);
@@ -132,14 +114,6 @@ async function createCaso(req, res, next) {
 
 async function updateCaso(req, res, next) {
     try {
-        // Validar ID com Zod
-        const idParse = idSchema.safeParse(req.params);
-        if (!idParse.success) {
-            const { fieldErrors } = idParse.error.flatten();
-            throw new ValidationError(fieldErrors);
-        }
-
-        // Validar dados com Zod
         const bodyParse = casoSchema.safeParse(req.body);
         if (!bodyParse.success) {
             const { formErrors, fieldErrors } = bodyParse.error.flatten();
@@ -151,11 +125,11 @@ async function updateCaso(req, res, next) {
 
         const dados = bodyParse.data;
         
-        // Normalizar status para lowercase
         if (dados.status) {
             dados.status = String(dados.status).toLowerCase();
         }
 
+        req.body = dados;
         await handleUpdate(casosRepository, null, req, res, next);
     } catch (error) {
         next(error);
@@ -164,16 +138,8 @@ async function updateCaso(req, res, next) {
 
 async function patchCaso(req, res, next) {
     try {
-        // Validar ID com Zod
-        const idParse = idSchema.safeParse(req.params);
-        if (!idParse.success) {
-            const { fieldErrors } = idParse.error.flatten();
-            throw new ValidationError(fieldErrors);
-        }
-
-        const { id } = idParse.data;
+        const { id } = req.params;
         
-        // Validar dados parciais
         const dados = req.body;
         const errors = {};
         
@@ -196,6 +162,7 @@ async function patchCaso(req, res, next) {
             throw new ValidationError(errors);
         }
 
+        req.body = dados;
         await handlePatch(casosRepository, null, req, res, next);
     } catch (error) {
         next(error);
@@ -204,14 +171,7 @@ async function patchCaso(req, res, next) {
 
 async function deleteCaso(req, res, next) {
     try {
-        // Validar ID com Zod
-        const idParse = idSchema.safeParse(req.params);
-        if (!idParse.success) {
-            const { fieldErrors } = idParse.error.flatten();
-            throw new ValidationError(fieldErrors);
-        }
-
-        const { id } = idParse.data;
+        const { id } = req.params;
         await handleDelete(casosRepository, 'Caso', req, res, next);
     } catch (error) {
         next(error);
