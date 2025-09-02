@@ -124,7 +124,7 @@ async function createCaso(req, res, next) {
             dados.status = String(dados.status).toLowerCase();
         }
 
-        await handleCreate(casosRepository, () => {}, req, res, next);
+        await handleCreate(casosRepository, null, req, res, next);
     } catch (error) {
         next(error);
     }
@@ -156,7 +156,7 @@ async function updateCaso(req, res, next) {
             dados.status = String(dados.status).toLowerCase();
         }
 
-        await handleUpdate(casosRepository, () => {}, req, res, next);
+        await handleUpdate(casosRepository, null, req, res, next);
     } catch (error) {
         next(error);
     }
@@ -196,7 +196,7 @@ async function patchCaso(req, res, next) {
             throw new ValidationError(errors);
         }
 
-        await handlePatch(casosRepository, () => {}, req, res, next);
+        await handlePatch(casosRepository, null, req, res, next);
     } catch (error) {
         next(error);
     }

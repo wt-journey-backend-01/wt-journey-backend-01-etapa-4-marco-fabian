@@ -4,7 +4,9 @@ async function handleCreate(repository, validateFn, req, res, next) {
   try {
     const dados = req.body;
     const { id: _, ...dadosSemId } = dados;
-    await Promise.resolve(validateFn(dadosSemId));
+    if (validateFn) {
+      await Promise.resolve(validateFn(dadosSemId));
+    }
     const novoItem = await repository.create(dadosSemId);
     res.status(201).json(novoItem);
   } catch (error) {
@@ -24,7 +26,9 @@ async function handleUpdate(repository, validateFn, req, res, next) {
       throw createNotFoundError(getNotFoundMessage(repository.name));
     }
     const { id: _, ...dadosSemId } = dados;
-    await Promise.resolve(validateFn(dadosSemId, true));
+    if (validateFn) {
+      await Promise.resolve(validateFn(dadosSemId, true));
+    }
     const itemAtualizado = await repository.updateById(id, dadosSemId);
     res.status(200).json(itemAtualizado);
   } catch (error) {
@@ -44,7 +48,7 @@ async function handlePatch(repository, validateFn, req, res, next) {
       throw createNotFoundError(getNotFoundMessage(repository.name));
     }
     const { id: _, ...dadosSemId } = dados;
-    if (Object.keys(dadosSemId).length > 0) {
+    if (Object.keys(dadosSemId).length > 0 && validateFn) {
       await Promise.resolve(validateFn(dadosSemId));
     }
     const itemAtualizado = await repository.patchById(id, dadosSemId);

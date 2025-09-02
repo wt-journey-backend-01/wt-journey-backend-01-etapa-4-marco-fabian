@@ -91,7 +91,7 @@ async function createAgente(req, res, next) {
             });
         }
 
-        await handleCreate(agentesRepository, () => {}, req, res, next);
+        await handleCreate(agentesRepository, null, req, res, next);
     } catch (error) {
         next(error);
     }
@@ -130,7 +130,7 @@ async function updateAgente(req, res, next) {
             });
         }
 
-        await handleUpdate(agentesRepository, () => {}, req, res, next);
+        await handleUpdate(agentesRepository, null, req, res, next);
     } catch (error) {
         next(error);
     }
@@ -173,7 +173,7 @@ async function patchAgente(req, res, next) {
             throw new ValidationError(errors);
         }
 
-        await handlePatch(agentesRepository, () => {}, req, res, next);
+        await handlePatch(agentesRepository, null, req, res, next);
     } catch (error) {
         next(error);
     }
