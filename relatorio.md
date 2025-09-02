@@ -1,42 +1,46 @@
 <sup>Esse é um feedback gerado por IA, ele pode conter erros.</sup>
 
-Você tem 3 créditos restantes para usar o sistema de feedback AI.
+Você tem 2 créditos restantes para usar o sistema de feedback AI.
 
 # Feedback para marco-fabian:
 
-Nota final: **50.3/100**
+Nota final: **45.0/100**
 
-Olá, Marco Fabian! 👋✨
-
-Primeiramente, parabéns pelo esforço e pelo progresso que você já alcançou nesse desafio complexo de API REST com Node.js, Express e PostgreSQL! 🎉 Você estruturou seu projeto muito bem, seguindo a arquitetura MVC, e implementou funcionalidades importantes como autenticação com JWT, hashing de senhas com bcrypt, além de proteger rotas sensíveis com middleware — tudo isso mostra maturidade e cuidado na construção de aplicações profissionais.
-
-Além disso, você conseguiu passar diversos testes importantes, como:
-
-- Criação, login e logout de usuários com JWT válido.
-- Validações rigorosas para criação de usuários (nome, email, senha).
-- Proteção das rotas de agentes e casos para quem não está autenticado (status 401).
-- Deleção correta de usuários.
-- Retorno correto de status codes e mensagens para muitos cenários.
-
-Isso é um baita sinal de que você domina boa parte dos conceitos fundamentais! 🚀👏
+Olá, Marco Fabian! 🚀 Parabéns pelo esforço e pelo progresso que você já fez até aqui! Trabalhar com autenticação, segurança e integração com banco de dados é um desafio e tanto, e seu projeto já mostra uma boa estrutura e vários acertos importantes. Vamos juntos analisar seu código para destravar esses pontos que ainda precisam de atenção e te ajudar a avançar com confiança. 💪
 
 ---
 
-# Análise dos testes que falharam e causas raiz
+## 🎉 Pontos Positivos e Conquistas Bônus
 
-Agora, vamos analisar juntos os testes que não passaram, para entender o que está acontecendo e como você pode melhorar para destravar 100% da sua aplicação!
+- Seu projeto está muito bem organizado na estrutura MVC, com controllers, repositories, middlewares e rotas bem separados.
+- A implementação do registro e login de usuários está funcionando corretamente, incluindo validação de senha e hash com bcrypt.
+- O middleware de autenticação com JWT está bem estruturado, tratando erros de token expirado e inválido.
+- Parabéns por ter implementado os endpoints de listagem e exclusão de usuários com proteção via JWT!
+- Você também conseguiu implementar os filtros e buscas nos endpoints de agentes e casos, o que é um bônus valioso!
+- O endpoint `/usuarios/me` para retornar dados do usuário autenticado está presente e funcionando.
+- A documentação no INSTRUCTIONS.md está clara e contém exemplos úteis para uso da API e autenticação.
+
+Isso tudo mostra que você entendeu bem o fluxo de autenticação e a organização do projeto. 👏
 
 ---
 
-## 1. Falha: "USERS: Recebe erro 400 ao tentar criar um usuário com e-mail já em uso"
+## ❗ Testes que Falharam e Análise Detalhada
 
-### O que o teste espera?
+Aqui está a lista dos testes base que falharam, que são essenciais para a aprovação:
 
-Quando você tenta registrar um usuário com um email que já está cadastrado, a API deve retornar um status 400 com mensagem de erro adequada.
+- 'USERS: Recebe erro 400 ao tentar criar um usuário com e-mail já em uso'
+- Diversos testes relacionados a agentes (criação, listagem, busca por ID, atualização PUT/PATCH, exclusão) com status codes esperados e erros 400, 401, 404.
+- Diversos testes relacionados a casos (criação, listagem, busca, atualização, exclusão) com status codes esperados e erros 400, 401, 404.
 
-### O que seu código faz?
+---
 
-No seu `authController.js`, você tem essa verificação:
+### 1. Erro 400 ao tentar criar usuário com e-mail já em uso
+
+**O que o teste espera:**  
+Quando um usuário tenta se registrar com um email que já está cadastrado, a API deve responder com status 400 BAD REQUEST e uma mensagem clara.
+
+**Análise no seu código:**  
+No seu `authController.js`, no método `register`, você faz a verificação correta:
 
 ```js
 const usuarioExistente = await usuariosRepository.findByEmail(email);
@@ -47,13 +51,14 @@ if (usuarioExistente) {
 }
 ```
 
-Isso está correto! Você verifica se o email já existe e lança um erro customizado.
+Isso está correto. Porém, o teste está falhando, o que indica que talvez o erro não esteja sendo capturado ou retornado com o status correto.
 
-### Possível causa raiz do problema
+**Possível causa raiz:**  
+- Verifique se no seu arquivo `utils/errorHandler.js` você está tratando o erro `EmailExistsError` para retornar status 400.  
+- Se esse tratamento estiver faltando ou incorreto, o erro pode estar sendo tratado como 500 ou outro status, causando a falha no teste.
 
-O problema provavelmente está no tratamento do erro na camada de middleware `errorHandler`, que não está retornando o status 400 quando esse erro é lançado. Ou seja, a exceção `EmailExistsError` pode estar sendo capturada, mas o status HTTP retornado não é 400, fazendo o teste falhar.
-
-**Sugestão:** Verifique seu `utils/errorHandler.js` para garantir que o erro `EmailExistsError` está mapeado para status 400. Um exemplo simplificado:
+**Como corrigir:**  
+No seu `errorHandler.js`, adicione um tratamento para `EmailExistsError` assim:
 
 ```js
 class EmailExistsError extends Error {
@@ -64,168 +69,187 @@ class EmailExistsError extends Error {
   }
 }
 
-// No middleware de erro:
-function errorHandler(err, req, res, next) {
-  const status = err.statusCode || 500;
-  res.status(status).json({
-    error: err.name,
-    message: err.message || 'Erro interno do servidor',
-  });
+// No middleware de erro, faça algo como:
+if (error.name === 'EmailExistsError') {
+  return res.status(400).json({ error: error.message });
 }
 ```
 
-Se o seu `errorHandler` não está fazendo isso, o teste vai falhar.
-
-### Recomendo fortemente:
-
-- Revisar seu `errorHandler.js` para garantir que erros customizados retornem o status correto.
-- Conferir se o objeto `EmailExistsError` tem uma propriedade para status HTTP e se o middleware usa ela.
-
-Para entender melhor como criar e tratar erros customizados, recomendo este vídeo sobre boas práticas de tratamento de erros em Node.js: https://www.youtube.com/watch?v=bGN_xNc4A1k&t=3s
+Se já existir, confira se está correto e se o erro lançado no controller está usando essa classe.
 
 ---
 
-## 2. Falhas relacionadas a agentes e casos (ex: criação, listagem, atualização, deleção, buscas)
+### 2. Falhas nos testes de agentes (GET, POST, PUT, PATCH, DELETE) com status 401 e 404
 
-Você teve várias falhas em testes fundamentais para agentes e casos, como:
+**O que o teste espera:**  
+- Que as rotas de agentes estejam protegidas por autenticação JWT (status 401 se não autorizado).  
+- Que a validação de IDs e payloads esteja correta, retornando 400 para formatos inválidos e 404 para IDs não existentes.  
+- Que as operações de criação, atualização e exclusão funcionem com status codes adequados e dados corretos.
 
-- Criar agente com status 201 e dados corretos
-- Listar agentes e casos com status 200 e dados completos
-- Buscar por ID com validação correta
-- Atualizar com PUT e PATCH com validação e status adequados
-- Deletar com status 204
-- Receber status 400 para payload incorreto
-- Receber status 404 para IDs inválidos ou inexistentes
+**Análise no seu código:**
 
-### Análise detalhada
-
-Seu código para agentes e casos está muito bem estruturado! Você usa Zod para validação, tem tratamento de erros customizados e usa helpers para CRUD.
-
-Porém, um ponto importante pode estar impactando:
-
-### Possível causa raiz: Falta de retorno correto após criação (status 201) e uso incorreto dos helpers
-
-Por exemplo, no seu `agentesController.js` para criar agente:
+- No arquivo `routes/agentesRoutes.js`, você tem uma função `validateParams` que chama o `authMiddleware` dentro dela:
 
 ```js
-async function createAgente(req, res, next) {
+const validateParams = (req, res, next) => {
   try {
-    // validação com Zod...
-    // validação data...
-    await handleCreate(agentesRepository, null, req, res, next);
+    // validação...
+    authMiddleware(req, res, next);
   } catch (error) {
     next(error);
   }
-}
+};
 ```
 
-Aqui você chama `handleCreate` passando `null` como segundo parâmetro (que provavelmente seria para validação ou transformação), mas não está capturando nem retornando o resultado da criação. Se `handleCreate` não fizer o `res.status(201).json(...)` corretamente, a resposta pode não estar conforme esperado.
-
-### Verifique se o helper `handleCreate` está implementado para:
-
-- Inserir o dado no banco
-- Retornar status 201
-- Retornar o objeto criado no corpo da resposta
-
-Se seu helper não está fazendo isso, a criação pode estar retornando status 200 ou nem retornando JSON, o que quebra o teste.
-
-### Outro ponto: Validação de IDs
-
-Você usa Zod para validar IDs, o que é ótimo. Porém, certifique-se que o esquema usado para validar IDs (ex: `idSchema`) está correto e aplicado em todos os endpoints que recebem parâmetro `id`.
-
-### Recomendações:
-
-- Confirme que seus helpers (`handleCreate`, `handleUpdate`, etc.) retornam respostas HTTP corretas.
-- Caso queira, você pode substituir o uso dos helpers por código explícito para ter mais controle e visibilidade.
-- Teste manualmente as rotas para garantir que o status e o corpo das respostas estão corretos.
-
----
-
-## 3. Testes bônus que falharam: filtros e endpoints extras
-
-Você tentou implementar filtros de casos por status, agente, busca por palavras-chave, e o endpoint `/usuarios/me`. Eles falharam, indicando que:
-
-- Talvez os parâmetros de consulta não estejam sendo tratados corretamente.
-- O endpoint `/usuarios/me` pode não estar retornando os dados do usuário autenticado.
-- Filtros complexos podem não estar aplicados na camada de repositório ou controller.
-
-### Análise
-
-No `casosController.js` você tem o método `getAllCasos` com filtro:
+Mas nas rotas você também usa `authMiddleware` diretamente, por exemplo:
 
 ```js
-const { agente_id, status, q } = queryParse.data;
-// validações...
-casos = await casosRepository.findWithFilters({ agente_id: parsedAgenteId, status, q });
+router.get('/', authMiddleware, agentesController.getAllAgentes);
+router.get('/:id', validateParams, agentesController.getAgenteById);
 ```
 
-No repositório, o método `findWithFilters` está correto em geral.
+**Problema identificado:**  
+- O middleware `validateParams` chama `authMiddleware` internamente, mas **não está usando `next()` para encadear corretamente**.  
+- Isso pode causar que o `authMiddleware` não seja executado corretamente ou que o fluxo de middlewares não funcione como esperado, resultando em falha na autenticação e status 401 inesperados.  
+- Além disso, a validação dos parâmetros deveria ser um middleware separado, e o `authMiddleware` deve ser aplicado explicitamente na rota para garantir a ordem correta.
 
-Mas pode haver problema na validação do parâmetro `status` para aceitar somente 'aberto' ou 'solucionado' (case sensitive), ou na passagem do `agente_id`.
+**Como corrigir:**  
+Separe os middlewares de validação e autenticação e aplique ambos na rota, assim:
 
-### Dica:
+```js
+const validateParams = (req, res, next) => {
+  try {
+    // validação dos params
+    next();
+  } catch (error) {
+    next(error);
+  }
+};
 
-- Garanta que os parâmetros de consulta sejam normalizados (ex: `status.toLowerCase()`) antes de usar.
-- Teste os filtros manualmente para ver se retornam dados esperados.
-- Verifique se o endpoint `/usuarios/me` está devidamente protegido pelo middleware e retorna o usuário correto.
+router.get('/:id', authMiddleware, validateParams, agentesController.getAgenteById);
+```
 
----
+Ou, se quiser manter o `validateParams` chamando o `authMiddleware`, você precisa garantir que o fluxo de middlewares seja assíncrono e que o `next()` seja chamado corretamente, por exemplo:
 
-## 4. Estrutura de diretórios
+```js
+const validateParams = async (req, res, next) => {
+  try {
+    // validação dos params
+    await authMiddleware(req, res, next);
+  } catch (error) {
+    next(error);
+  }
+};
+```
 
-Sua estrutura está muito bem organizada e segue o padrão esperado:
-
-- `controllers/`
-- `repositories/`
-- `routes/`
-- `middlewares/`
-- `db/migrations` e `db/seeds`
-- `utils/`
-
-Parabéns! Isso facilita manutenção e escalabilidade.
-
----
-
-# Dicas e sugestões para você avançar 🚀
-
-1. **Erro 400 no cadastro de usuário com email duplicado:**  
-   Reveja seu `errorHandler.js` para garantir que o erro customizado `EmailExistsError` retorna status 400.  
-   [Vídeo recomendado sobre tratamento de erros e boas práticas](https://www.youtube.com/watch?v=bGN_xNc4A1k&t=3s)
-
-2. **Respostas HTTP e uso dos helpers:**  
-   Confirme que seus helpers (`handleCreate`, `handleUpdate`, etc.) fazem o `res.status(201).json(...)` ou `res.status(200).json(...)` corretamente. Caso contrário, implemente manualmente para garantir o controle.  
-
-3. **Filtros e endpoints extras:**  
-   Teste os filtros manualmente, normalize parâmetros e garanta que o endpoint `/usuarios/me` retorna o usuário autenticado.  
-
-4. **Validações com Zod:**  
-   Continue usando Zod para validar dados e parâmetros, mas revise se os esquemas estão corretos para todos os casos (ex: IDs, status, cargo).  
-
-5. **JWT e autenticação:**  
-   Seu middleware está bem implementado, mas sempre verifique se o token está sendo enviado corretamente no header `Authorization` como `Bearer <token>`.  
+Mas a forma mais clara e recomendada é aplicar os middlewares separadamente na rota.
 
 ---
 
-# Resumo dos principais pontos para focar:
+### 3. Erros 404 ao buscar ou atualizar agentes e casos por ID inválido ou inexistente
 
-- [ ] Ajustar o middleware de tratamento de erros para retornar status 400 em erros de email duplicado (ex: `EmailExistsError`).
-- [ ] Confirmar que os helpers de controller retornam o status e JSON corretos (ex: status 201 para criação).
-- [ ] Revisar normalização e validação dos parâmetros de filtros (status, agente_id, query).
-- [ ] Garantir que o endpoint `/usuarios/me` funciona corretamente e retorna dados do usuário autenticado.
-- [ ] Testar manualmente as rotas protegidas com token JWT para garantir que o middleware funciona como esperado.
-- [ ] Revisar o uso do Zod para validação de todos os inputs, IDs e query params.
+**O que o teste espera:**  
+- Que IDs inválidos (ex: strings que não podem ser convertidas para inteiros) retornem 400.  
+- Que IDs não existentes retornem 404.
+
+**Análise no seu código:**
+
+- Você está usando `zod` para validar IDs com `idSchema` e lançando `ValidationError` para erros de formato — isso está correto.  
+- No controller, você usa helpers como `handleGetById` que provavelmente retornam 404 se o registro não existir.  
+- Isso está adequado, mas pode haver alguma rota ou caso onde a validação não está sendo aplicada antes da consulta, deixando o banco tentar buscar com ID inválido e causando erro interno.
+
+**Como corrigir:**  
+- Confirme que todas as rotas que recebem `:id` aplicam o middleware de validação antes do controller.  
+- No seu arquivo `routes/agentesRoutes.js` e `routes/casosRoutes.js`, revise a ordem e aplicação dos middlewares para garantir que a validação ocorra antes da consulta.
 
 ---
 
-Marco, seu projeto já está muito bem encaminhado e você tem uma base sólida! 💪 Com esses ajustes, tenho certeza que você vai destravar todos os testes e entregar uma API robusta e segura. Continue firme, aproveite para testar bastante cada rota e validar os fluxos de autenticação. E claro, use os recursos recomendados para aprofundar seu conhecimento:
+### 4. Falhas 401 Unauthorized ao tentar acessar rotas protegidas sem token JWT
 
-- Sobre autenticação e JWT: https://www.youtube.com/watch?v=Q4LQOfYwujk (vídeo feito pelos meus criadores, que fala muito bem sobre conceitos básicos e fundamentais de cibersegurança).
-- JWT na prática: https://www.youtube.com/watch?v=keS0JWOypIU
-- Uso de bcrypt e JWT juntos: https://www.youtube.com/watch?v=L04Ln97AwoY
+**O que o teste espera:**  
+- Que as rotas protegidas retornem status 401 se o token JWT não for enviado ou for inválido.
 
-Se precisar, volte aqui que vamos destrinchar cada ponto juntos! 🚀✨
+**Análise no seu código:**
 
-Um forte abraço e até a próxima revisão! 👊😄
+- Seu `authMiddleware.js` está bem implementado, verificando o header `Authorization`, validando o token e setando `req.user`.  
+- No entanto, no `server.js`, as rotas `/agentes` e `/casos` estão registradas assim:
+
+```js
+app.use('/agentes', agentesRoutes);
+app.use('/casos', casosRoutes);
+```
+
+- Dentro de `agentesRoutes.js` e `casosRoutes.js`, você aplica o middleware `authMiddleware` nas rotas, mas, como vimos, pode haver problemas na ordem dos middlewares, especialmente com o `validateParams` chamando `authMiddleware` dentro.
+
+**Como corrigir:**  
+- Para garantir que todas as rotas de `/agentes` e `/casos` estejam protegidas, você pode aplicar o middleware de autenticação diretamente no `server.js` antes de registrar as rotas:
+
+```js
+app.use('/agentes', authMiddleware, agentesRoutes);
+app.use('/casos', authMiddleware, casosRoutes);
+```
+
+- E dentro das rotas, remova chamadas redundantes ao `authMiddleware`. Isso evita problemas de ordem e garante proteção consistente.
+
+---
+
+### 5. Erros 400 ao criar ou atualizar agentes e casos com payload em formato incorreto
+
+**O que o teste espera:**  
+- Que a validação do corpo da requisição com `zod` funcione corretamente, retornando 400 para payloads inválidos.
+
+**Análise no seu código:**
+
+- Você está usando `zod` para validar os schemas e lançando `ValidationError` com os erros detalhados — isso está correto.  
+- Porém, em alguns controllers (ex: agentesController.js), você faz validação e depois altera `req.body` antes de chamar os helpers, o que é bom.  
+- Certifique-se que os schemas usados estejam consistentes com os requisitos, especialmente para campos obrigatórios e formatos.
+
+---
+
+## 🛠️ Recomendações Gerais para Melhorias
+
+1. **Middleware de validação e autenticação:** Separe claramente os middlewares de validação de parâmetros e autenticação, e aplique-os em sequência nas rotas, sem que um middleware chame o outro diretamente. Isso evita confusão no fluxo e garante que erros sejam tratados corretamente.
+
+2. **Tratamento de erros customizados:** Verifique seu `utils/errorHandler.js` para garantir que todas as suas classes de erro personalizadas (ex: `EmailExistsError`, `ValidationError`, `TokenError`) estão mapeadas para os status HTTP corretos e mensagens claras.
+
+3. **Proteção consistente de rotas:** Para garantir que todas as rotas protegidas estejam realmente protegidas, aplique o `authMiddleware` no `server.js` para os caminhos `/agentes` e `/casos`, e revise as rotas para evitar múltiplas aplicações redundantes.
+
+4. **Verificação de IDs:** Garanta que a validação de IDs ocorra antes de qualquer consulta ao banco para evitar erros inesperados e garantir respostas 400 para IDs inválidos.
+
+5. **Revisão das mensagens e nomes nos retornos:** No arquivo `INSTRUCTIONS.md`, notei que no exemplo de login o campo do token é `acess_token` (com 's' a mais), mas no código você retorna `access_token`. Essa inconsistência pode causar falha em testes que esperam exatamente o nome do campo. Atenção a detalhes assim!
+
+---
+
+## 📚 Recursos para Você Aprofundar
+
+- Para entender melhor o fluxo correto de middlewares e organização MVC:  
+  https://www.youtube.com/watch?v=bGN_xNc4A1k&t=3s
+
+- Para aprofundar no uso de JWT e autenticação segura:  
+  https://www.youtube.com/watch?v=Q4LQOfYwujk (esse vídeo, feito pelos meus criadores, fala muito bem sobre autenticação e segurança)
+
+- Para dominar o uso do bcrypt e JWT juntos:  
+  https://www.youtube.com/watch?v=L04Ln97AwoY
+
+- Para configurar corretamente o banco com Docker e Knex (caso precise revisar):  
+  https://www.youtube.com/watch?v=uEABDBQV-Ek&t=1s
+
+---
+
+## 📋 Resumo Rápido dos Principais Pontos para Melhorar
+
+- Corrija a aplicação dos middlewares de validação e autenticação para que não se chamem mutuamente, aplicando-os em sequência nas rotas.  
+- Garanta que o tratamento de erros customizados retorne os status HTTP corretos (ex: 400 para email duplicado).  
+- Aplique o `authMiddleware` diretamente no `server.js` para rotas protegidas para garantir proteção consistente.  
+- Verifique e padronize os nomes dos campos no JSON de resposta, especialmente o token JWT (ex: `access_token` vs `acess_token`).  
+- Confirme que a validação de IDs ocorre antes das consultas ao banco para evitar erros inesperados.  
+- Revise o `errorHandler.js` para assegurar que todas as exceções personalizadas estejam bem mapeadas.  
+
+---
+
+Marco, você está no caminho certo e já tem uma base sólida! Com esses ajustes, sua aplicação vai ficar ainda mais robusta e profissional. Continue focado, revise os pontos que destaquei e não hesite em buscar os vídeos recomendados para reforçar seu aprendizado. Estou aqui torcendo pelo seu sucesso! 🚀💙
+
+Se quiser, posso te ajudar a revisar trechos específicos do código para implementar essas melhorias. Vamos em frente! 🙌
 
 > Caso queira tirar uma dúvida específica, entre em contato com o Chapter no nosso [discord](https://discord.gg/DryuHVnz).
 
