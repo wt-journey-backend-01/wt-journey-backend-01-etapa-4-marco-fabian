@@ -1,35 +1,42 @@
 <sup>Esse é um feedback gerado por IA, ele pode conter erros.</sup>
 
-Você tem 4 créditos restantes para usar o sistema de feedback AI.
+Você tem 3 créditos restantes para usar o sistema de feedback AI.
 
 # Feedback para marco-fabian:
 
 Nota final: **50.3/100**
 
-Olá, Marco Fabian! 🚔✨
+Olá, Marco Fabian! 👋✨
 
-Primeiramente, parabéns pelo empenho em entregar uma API completa, com autenticação, autorização, rotas protegidas e até documentação Swagger! Isso já mostra uma maturidade muito boa no desenvolvimento backend com Node.js, Express e PostgreSQL. 👏🎉
+Primeiramente, parabéns pelo esforço e pelo progresso que você já alcançou nesse desafio complexo de API REST com Node.js, Express e PostgreSQL! 🎉 Você estruturou seu projeto muito bem, seguindo a arquitetura MVC, e implementou funcionalidades importantes como autenticação com JWT, hashing de senhas com bcrypt, além de proteger rotas sensíveis com middleware — tudo isso mostra maturidade e cuidado na construção de aplicações profissionais.
 
-Também é importante destacar que você conseguiu fazer vários testes base passarem, incluindo o registro e login de usuários com JWT, logout, deleção de usuários, e a proteção das rotas de agentes e casos com token JWT. Isso indica que a base da autenticação está bem estruturada, o que é um ótimo ponto de partida! 🔐👍
+Além disso, você conseguiu passar diversos testes importantes, como:
 
-Além disso, você avançou em alguns bônus, como a filtragem simples de casos e agentes, e o endpoint `/usuarios/me` para retornar dados do usuário autenticado. Isso é excelente, pois demonstra que você foi além do básico. 🌟
+- Criação, login e logout de usuários com JWT válido.
+- Validações rigorosas para criação de usuários (nome, email, senha).
+- Proteção das rotas de agentes e casos para quem não está autenticado (status 401).
+- Deleção correta de usuários.
+- Retorno correto de status codes e mensagens para muitos cenários.
 
----
-
-### Agora, vamos analisar os pontos que precisam de atenção para destravar sua nota e fazer sua API brilhar ainda mais! 🕵️‍♂️🔍
-
----
-
-## 1. Testes que falharam e análise detalhada
-
-Vou listar alguns testes importantes que falharam e apontar o provável motivo, com sugestões para você corrigir.
+Isso é um baita sinal de que você domina boa parte dos conceitos fundamentais! 🚀👏
 
 ---
 
-### 1.1 `'USERS: Recebe erro 400 ao tentar criar um usuário com e-mail já em uso'`
+# Análise dos testes que falharam e causas raiz
 
-**O que acontece:**  
-No seu `authController.register`, você verifica se o email já existe e lança um erro:
+Agora, vamos analisar juntos os testes que não passaram, para entender o que está acontecendo e como você pode melhorar para destravar 100% da sua aplicação!
+
+---
+
+## 1. Falha: "USERS: Recebe erro 400 ao tentar criar um usuário com e-mail já em uso"
+
+### O que o teste espera?
+
+Quando você tenta registrar um usuário com um email que já está cadastrado, a API deve retornar um status 400 com mensagem de erro adequada.
+
+### O que seu código faz?
+
+No seu `authController.js`, você tem essa verificação:
 
 ```js
 const usuarioExistente = await usuariosRepository.findByEmail(email);
@@ -40,223 +47,185 @@ if (usuarioExistente) {
 }
 ```
 
-**Por que pode falhar?**  
-Provavelmente, o seu middleware de tratamento de erros (`errorHandler.js`) não está capturando essa exceção e retornando o status HTTP 400 conforme esperado pelo teste. Ou o erro customizado `EmailExistsError` não está configurado para gerar um status 400.
+Isso está correto! Você verifica se o email já existe e lança um erro customizado.
 
-**O que verificar:**
+### Possível causa raiz do problema
 
-- Confirme que seu `errorHandler.js` mapeia o erro `EmailExistsError` para status 400.
-- Veja se o middleware está corretamente aplicado no `server.js`.
-- Certifique-se de que o corpo da resposta de erro está no formato esperado.
+O problema provavelmente está no tratamento do erro na camada de middleware `errorHandler`, que não está retornando o status 400 quando esse erro é lançado. Ou seja, a exceção `EmailExistsError` pode estar sendo capturada, mas o status HTTP retornado não é 400, fazendo o teste falhar.
 
----
-
-### 1.2 Falhas relacionadas a agentes e casos: criação, atualização, busca e deleção
-
-Testes como:
-
-- `'AGENTS: Cria agentes corretamente com status code 201 e os dados inalterados...'`
-- `'AGENTS: Recebe status code 400 ao tentar criar agente com payload em formato incorreto'`
-- `'CASES: Cria casos corretamente com status code 201...'`
-- `'CASES: Recebe status code 404 ao tentar criar caso com ID de agente inexistente'`
-
-**Observação importante:**  
-No seu `agentesController.createAgente`, você está chamando:
+**Sugestão:** Verifique seu `utils/errorHandler.js` para garantir que o erro `EmailExistsError` está mapeado para status 400. Um exemplo simplificado:
 
 ```js
-await handleCreate(agentesRepository, () => {}, req, res, next);
-```
+class EmailExistsError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'EmailExistsError';
+    this.statusCode = 400;
+  }
+}
 
-E o mesmo em outros métodos para update, patch, delete.
-
-Porém, no `handleCreate` e demais helpers, você está passando uma função vazia `() => {}` como segundo parâmetro, que geralmente é usada para transformar os dados antes de salvar.
-
-**Possível causa de falha:**  
-Se o helper espera que essa função retorne os dados a serem inseridos, passar uma função vazia pode fazer com que nada seja enviado para o repositório, causando erros ou inserções vazias.
-
-**Exemplo de ajuste:**
-
-```js
-await handleCreate(agentesRepository, (dados) => dados, req, res, next);
-```
-
-Ou simplesmente passar `null` se o helper aceitar.
-
----
-
-### 1.3 Falha na senha no registro do usuário
-
-Você está usando o schema `usuarioRegSchema` para validar a senha, e seu `INSTRUCTIONS.md` define regras claras para senha (mínimo 8 caracteres, letras maiúsculas e minúsculas, números e caracteres especiais).
-
-**Verifique se:**
-
-- O schema Zod está validando corretamente essas regras.
-- Se o erro de senha inválida está retornando status 400 com mensagens claras.
-- Se o teste que falha está relacionado a senhas que não obedecem a esses critérios.
-
----
-
-### 1.4 Testes bônus que falharam: filtragem e endpoints detalhados
-
-Testes como:
-
-- `'Simple Filtering: Estudante implementou endpoint de filtragem de caso por status corretamente'`
-- `'Simple Filtering: Estudante implementou endpoint de busca de agente responsável por caso'`
-- `'User details: /usuarios/me retorna os dados do usuario logado e status code 200'`
-
-**Análise:**
-
-Seu código mostra que esses endpoints existem e parecem implementados, mas os testes falharam. Isso pode indicar que:
-
-- A rota `/usuarios/me` está protegida corretamente, mas talvez o token JWT não esteja sendo passado ou validado como esperado.
-- A filtragem por status e agente pode ter algum problema na forma como você processa os parâmetros ou monta a query no repositório.
-- Pode haver inconsistência no nome dos parâmetros (exemplo: `agente_id` vs `agenteId`) ou no tratamento do case (maiúsculas/minúsculas).
-
-**Sugestão:**  
-Revise os controllers e repositories para garantir que os filtros estejam aplicados exatamente como esperado, e que os erros sejam tratados com mensagens claras e status HTTP corretos.
-
----
-
-## 2. Estrutura de diretórios e organização do projeto
-
-Sua estrutura está muito próxima da esperada e você seguiu o padrão MVC direitinho! Isso é ótimo e merece reconhecimento! 🎯
-
-Só fique atento para sempre manter:
-
-- O middleware `authMiddleware.js` na pasta `middlewares/`
-- Os controllers em `controllers/`
-- As rotas em `routes/`
-- Os repositórios em `repositories/`
-- O arquivo `INSTRUCTIONS.md` com as instruções claras (vi que está bem detalhado!)
-
----
-
-## 3. Recomendações para corrigir e aprimorar
-
-### 3.1 Ajuste os helpers de controller para passar os dados corretamente
-
-No seu `agentesController.js` (e outros controllers), altere chamadas como:
-
-```js
-await handleCreate(agentesRepository, () => {}, req, res, next);
-```
-
-Para:
-
-```js
-await handleCreate(agentesRepository, (dados) => dados, req, res, next);
-```
-
-Ou simplesmente:
-
-```js
-await handleCreate(agentesRepository, null, req, res, next);
-```
-
-Se a função aceita `null` para não transformar os dados.
-
-Isso garante que os dados validados sejam passados para o repositório e inseridos no banco.
-
-### 3.2 Verifique o tratamento dos erros customizados
-
-No seu `utils/errorHandler.js`, garanta que os erros como `EmailExistsError`, `UserNotFoundError`, `InvalidPasswordError` e `TokenError` retornem os status HTTP corretos (400 para erros de validação, 401 para erros de autenticação, 404 para não encontrados).
-
-Isso é fundamental para que os testes reconheçam os erros corretamente.
-
-### 3.3 Confirme o uso correto do JWT_SECRET
-
-No `.env` você tem:
-
-```
-JWT_SECRET="wt_journey_backend_secret_key_2024_marco_fabian"
-```
-
-No seu código, em `authController.js` e `authMiddleware.js`, você usa `process.env.JWT_SECRET`. Isso está correto.
-
-Só confirme que o `.env` está sendo carregado corretamente (você usa `require('dotenv').config()` no `server.js`), e que o valor não tem aspas extras (às vezes o valor no `.env` pode ter aspas que entram na string, causando erro no JWT).
-
----
-
-## 4. Trechos de código que ilustram as correções
-
-### 4.1 Exemplo de ajuste no controller para criação de agente
-
-Antes:
-
-```js
-await handleCreate(agentesRepository, () => {}, req, res, next);
-```
-
-Depois:
-
-```js
-await handleCreate(agentesRepository, (dados) => dados, req, res, next);
-```
-
----
-
-### 4.2 Exemplo de tratamento de erro para email duplicado no errorHandler.js (exemplo)
-
-```js
-if (error instanceof EmailExistsError) {
-  return res.status(400).json({
-    error: 'Email já está em uso',
-    details: error.message
+// No middleware de erro:
+function errorHandler(err, req, res, next) {
+  const status = err.statusCode || 500;
+  res.status(status).json({
+    error: err.name,
+    message: err.message || 'Erro interno do servidor',
   });
 }
 ```
 
+Se o seu `errorHandler` não está fazendo isso, o teste vai falhar.
+
+### Recomendo fortemente:
+
+- Revisar seu `errorHandler.js` para garantir que erros customizados retornem o status correto.
+- Conferir se o objeto `EmailExistsError` tem uma propriedade para status HTTP e se o middleware usa ela.
+
+Para entender melhor como criar e tratar erros customizados, recomendo este vídeo sobre boas práticas de tratamento de erros em Node.js: https://www.youtube.com/watch?v=bGN_xNc4A1k&t=3s
+
 ---
 
-### 4.3 Exemplo de verificação do token no middleware
+## 2. Falhas relacionadas a agentes e casos (ex: criação, listagem, atualização, deleção, buscas)
 
-Seu middleware está bem feito, só fique atento para não aceitar tokens inválidos ou mal formados, e para responder com status 401:
+Você teve várias falhas em testes fundamentais para agentes e casos, como:
+
+- Criar agente com status 201 e dados corretos
+- Listar agentes e casos com status 200 e dados completos
+- Buscar por ID com validação correta
+- Atualizar com PUT e PATCH com validação e status adequados
+- Deletar com status 204
+- Receber status 400 para payload incorreto
+- Receber status 404 para IDs inválidos ou inexistentes
+
+### Análise detalhada
+
+Seu código para agentes e casos está muito bem estruturado! Você usa Zod para validação, tem tratamento de erros customizados e usa helpers para CRUD.
+
+Porém, um ponto importante pode estar impactando:
+
+### Possível causa raiz: Falta de retorno correto após criação (status 201) e uso incorreto dos helpers
+
+Por exemplo, no seu `agentesController.js` para criar agente:
 
 ```js
-if (!token) {
-  return res.status(401).json({ error: 'Token de acesso não fornecido' });
+async function createAgente(req, res, next) {
+  try {
+    // validação com Zod...
+    // validação data...
+    await handleCreate(agentesRepository, null, req, res, next);
+  } catch (error) {
+    next(error);
+  }
 }
 ```
 
----
+Aqui você chama `handleCreate` passando `null` como segundo parâmetro (que provavelmente seria para validação ou transformação), mas não está capturando nem retornando o resultado da criação. Se `handleCreate` não fizer o `res.status(201).json(...)` corretamente, a resposta pode não estar conforme esperado.
 
-## 5. Recursos recomendados para você aprofundar e corrigir os problemas
+### Verifique se o helper `handleCreate` está implementado para:
 
-- Para entender melhor autenticação, JWT e segurança, assista este vídeo feito pelos meus criadores, que explica os conceitos fundamentais de autenticação:  
-https://www.youtube.com/watch?v=Q4LQOfYwujk
+- Inserir o dado no banco
+- Retornar status 201
+- Retornar o objeto criado no corpo da resposta
 
-- Para aprofundar no uso do JWT na prática, veja este vídeo:  
-https://www.youtube.com/watch?v=keS0JWOypIU
+Se seu helper não está fazendo isso, a criação pode estar retornando status 200 ou nem retornando JSON, o que quebra o teste.
 
-- Para dominar o hashing de senhas com bcrypt e uso correto junto com JWT, recomendo este vídeo:  
-https://www.youtube.com/watch?v=L04Ln97AwoY
+### Outro ponto: Validação de IDs
 
-- Para garantir que suas migrations e seeds estejam corretas e que o banco esteja configurado, veja este vídeo sobre configuração com Docker e Knex:  
-https://www.youtube.com/watch?v=uEABDBQV-Ek&t=1s
+Você usa Zod para validar IDs, o que é ótimo. Porém, certifique-se que o esquema usado para validar IDs (ex: `idSchema`) está correto e aplicado em todos os endpoints que recebem parâmetro `id`.
 
-- Para organizar melhor seu projeto e entender a arquitetura MVC em Node.js, este vídeo é muito útil:  
-https://www.youtube.com/watch?v=bGN_xNc4A1k&t=3s
+### Recomendações:
 
----
-
-## 6. Resumo rápido dos pontos para focar
-
-- Corrigir chamadas dos helpers de controller para garantir que os dados sejam passados corretamente para os repositórios.
-- Ajustar o middleware de erros para retornar status HTTP corretos para erros customizados (ex: email duplicado -> 400).
-- Verificar se o token JWT está sendo gerado, enviado e validado corretamente, sem problemas no segredo ou formato.
-- Revisar validações das senhas no schema para garantir que erros de senha inválida sejam capturados e retornem 400.
-- Conferir se os filtros de busca e listagem nos controllers e repositórios estão aplicados corretamente, com parâmetros e tipos coerentes.
-- Garantir que o `.env` está sendo carregado corretamente e que não há aspas extras no valor do JWT_SECRET.
-- Revisar as mensagens e formatos de resposta para que correspondam exatamente ao que os testes esperam.
-- Manter a estrutura de diretórios conforme o padrão exigido, o que você já fez muito bem!
+- Confirme que seus helpers (`handleCreate`, `handleUpdate`, etc.) retornam respostas HTTP corretas.
+- Caso queira, você pode substituir o uso dos helpers por código explícito para ter mais controle e visibilidade.
+- Teste manualmente as rotas para garantir que o status e o corpo das respostas estão corretos.
 
 ---
 
-Marco, você está no caminho certo e já tem uma base muito sólida! 🚀 Com esses ajustes, sua API vai ficar ainda mais robusta e profissional, pronta para proteger os dados sensíveis do Departamento de Polícia com segurança e qualidade. 💪👮‍♂️
+## 3. Testes bônus que falharam: filtros e endpoints extras
 
-Continue assim, aprendendo e aprimorando seu código. Qualquer dúvida, estou aqui para ajudar! 😉
+Você tentou implementar filtros de casos por status, agente, busca por palavras-chave, e o endpoint `/usuarios/me`. Eles falharam, indicando que:
 
-Um abraço e bons códigos! 👊✨
+- Talvez os parâmetros de consulta não estejam sendo tratados corretamente.
+- O endpoint `/usuarios/me` pode não estar retornando os dados do usuário autenticado.
+- Filtros complexos podem não estar aplicados na camada de repositório ou controller.
+
+### Análise
+
+No `casosController.js` você tem o método `getAllCasos` com filtro:
+
+```js
+const { agente_id, status, q } = queryParse.data;
+// validações...
+casos = await casosRepository.findWithFilters({ agente_id: parsedAgenteId, status, q });
+```
+
+No repositório, o método `findWithFilters` está correto em geral.
+
+Mas pode haver problema na validação do parâmetro `status` para aceitar somente 'aberto' ou 'solucionado' (case sensitive), ou na passagem do `agente_id`.
+
+### Dica:
+
+- Garanta que os parâmetros de consulta sejam normalizados (ex: `status.toLowerCase()`) antes de usar.
+- Teste os filtros manualmente para ver se retornam dados esperados.
+- Verifique se o endpoint `/usuarios/me` está devidamente protegido pelo middleware e retorna o usuário correto.
+
+---
+
+## 4. Estrutura de diretórios
+
+Sua estrutura está muito bem organizada e segue o padrão esperado:
+
+- `controllers/`
+- `repositories/`
+- `routes/`
+- `middlewares/`
+- `db/migrations` e `db/seeds`
+- `utils/`
+
+Parabéns! Isso facilita manutenção e escalabilidade.
+
+---
+
+# Dicas e sugestões para você avançar 🚀
+
+1. **Erro 400 no cadastro de usuário com email duplicado:**  
+   Reveja seu `errorHandler.js` para garantir que o erro customizado `EmailExistsError` retorna status 400.  
+   [Vídeo recomendado sobre tratamento de erros e boas práticas](https://www.youtube.com/watch?v=bGN_xNc4A1k&t=3s)
+
+2. **Respostas HTTP e uso dos helpers:**  
+   Confirme que seus helpers (`handleCreate`, `handleUpdate`, etc.) fazem o `res.status(201).json(...)` ou `res.status(200).json(...)` corretamente. Caso contrário, implemente manualmente para garantir o controle.  
+
+3. **Filtros e endpoints extras:**  
+   Teste os filtros manualmente, normalize parâmetros e garanta que o endpoint `/usuarios/me` retorna o usuário autenticado.  
+
+4. **Validações com Zod:**  
+   Continue usando Zod para validar dados e parâmetros, mas revise se os esquemas estão corretos para todos os casos (ex: IDs, status, cargo).  
+
+5. **JWT e autenticação:**  
+   Seu middleware está bem implementado, mas sempre verifique se o token está sendo enviado corretamente no header `Authorization` como `Bearer <token>`.  
+
+---
+
+# Resumo dos principais pontos para focar:
+
+- [ ] Ajustar o middleware de tratamento de erros para retornar status 400 em erros de email duplicado (ex: `EmailExistsError`).
+- [ ] Confirmar que os helpers de controller retornam o status e JSON corretos (ex: status 201 para criação).
+- [ ] Revisar normalização e validação dos parâmetros de filtros (status, agente_id, query).
+- [ ] Garantir que o endpoint `/usuarios/me` funciona corretamente e retorna dados do usuário autenticado.
+- [ ] Testar manualmente as rotas protegidas com token JWT para garantir que o middleware funciona como esperado.
+- [ ] Revisar o uso do Zod para validação de todos os inputs, IDs e query params.
+
+---
+
+Marco, seu projeto já está muito bem encaminhado e você tem uma base sólida! 💪 Com esses ajustes, tenho certeza que você vai destravar todos os testes e entregar uma API robusta e segura. Continue firme, aproveite para testar bastante cada rota e validar os fluxos de autenticação. E claro, use os recursos recomendados para aprofundar seu conhecimento:
+
+- Sobre autenticação e JWT: https://www.youtube.com/watch?v=Q4LQOfYwujk (vídeo feito pelos meus criadores, que fala muito bem sobre conceitos básicos e fundamentais de cibersegurança).
+- JWT na prática: https://www.youtube.com/watch?v=keS0JWOypIU
+- Uso de bcrypt e JWT juntos: https://www.youtube.com/watch?v=L04Ln97AwoY
+
+Se precisar, volte aqui que vamos destrinchar cada ponto juntos! 🚀✨
+
+Um forte abraço e até a próxima revisão! 👊😄
 
 > Caso queira tirar uma dúvida específica, entre em contato com o Chapter no nosso [discord](https://discord.gg/DryuHVnz).
 
