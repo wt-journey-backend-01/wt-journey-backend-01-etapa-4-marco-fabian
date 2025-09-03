@@ -105,6 +105,14 @@ async function createCaso(req, res, next) {
             dados.status = String(dados.status).toLowerCase();
         }
 
+        // Verificar se agente existe antes de criar caso
+        const agente = await agentesRepository.findById(dados.agente_id);
+        if (!agente) {
+            throw new AgenteNotFoundError({
+                agente_id: `Agente com ID '${dados.agente_id}' não foi encontrado`
+            });
+        }
+
         req.body = dados;
         await handleCreate(casosRepository, null, req, res, next);
     } catch (error) {
@@ -127,6 +135,14 @@ async function updateCaso(req, res, next) {
         
         if (dados.status) {
             dados.status = String(dados.status).toLowerCase();
+        }
+
+        // Verificar se agente existe antes de atualizar caso
+        const agente = await agentesRepository.findById(dados.agente_id);
+        if (!agente) {
+            throw new AgenteNotFoundError({
+                agente_id: `Agente com ID '${dados.agente_id}' não foi encontrado`
+            });
         }
 
         req.body = dados;
@@ -155,6 +171,12 @@ async function patchCaso(req, res, next) {
             const parsed = Number(dados.agente_id);
             if (!Number.isInteger(parsed) || parsed <= 0) {
                 errors.agente_id = 'agente_id deve ser um inteiro positivo';
+            } else {
+                // Verificar se agente existe
+                const agente = await agentesRepository.findById(parsed);
+                if (!agente) {
+                    errors.agente_id = `Agente com ID '${parsed}' não foi encontrado`;
+                }
             }
         }
         

@@ -2,6 +2,7 @@ const agentesRepository = require('../repositories/agentesRepository');
 const casosRepository = require('../repositories/casosRepository');
 const { 
   ValidationError, 
+  InvalidIdError,
   IdNotFoundError, 
   DateValidationError, 
   CargoValidationError,
@@ -49,7 +50,20 @@ async function getAllAgentes(req, res, next) {
 
 async function getAgenteById(req, res, next) {
     try {
-        await handleGetById(agentesRepository, 'Agente', req, res, next);
+        const idParse = idSchema.safeParse(req.params);
+        if (!idParse.success) {
+            const { fieldErrors } = idParse.error.flatten();
+            throw new InvalidIdError(fieldErrors);
+        }
+
+        const agente = await agentesRepository.findById(idParse.data.id);
+        if (!agente) {
+            throw new IdNotFoundError(`O ID '${idParse.data.id}' não existe nos agentes`, {
+                id: `O ID '${idParse.data.id}' não existe nos agentes`
+            });
+        }
+
+        res.status(200).json(agente);
     } catch (error) {
         next(error);
     }

@@ -11,7 +11,7 @@ class APIError extends Error {
 
 class InvalidIdError extends APIError {
   constructor(errors) {
-    super("ID inválido", 400, errors);
+    super("ID inválido", 404, errors);
   }
 }
 
