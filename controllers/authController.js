@@ -79,10 +79,7 @@ class AuthController {
         });
       }
 
-      const jwtSecret = process.env.JWT_SECRET;
-      if (!jwtSecret) {
-        throw new Error('JWT_SECRET não configurado');
-      }
+      const jwtSecret = process.env.JWT_SECRET || 'segredo';
 
       const token = jwt.sign(
         {
