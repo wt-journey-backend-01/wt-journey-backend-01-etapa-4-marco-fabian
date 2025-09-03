@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const casosController = require('../controllers/casosController');
+const authMiddleware = require('../middlewares/authMiddleware');
 const { idSchema } = require('../utils/schemas');
 const { ValidationError } = require('../utils/errorHandler');
 
@@ -31,12 +32,12 @@ const validateParams = (req, res, next) => {
   }
 };
 
-router.get('/', casosController.getAllCasos);
-router.get('/:id', validateParams, casosController.getCasoById);
-router.get('/:caso_id/agente', validateParams, casosController.getAgenteFromCaso);
-router.post('/', casosController.createCaso);
-router.put('/:id', validateParams, casosController.updateCaso);
-router.patch('/:id', validateParams, casosController.patchCaso);
-router.delete('/:id', validateParams, casosController.deleteCaso);
+router.get('/', authMiddleware, casosController.getAllCasos);
+router.get('/:id', authMiddleware, validateParams, casosController.getCasoById);
+router.get('/:caso_id/agente', authMiddleware, validateParams, casosController.getAgenteFromCaso);
+router.post('/', authMiddleware, casosController.createCaso);
+router.put('/:id', authMiddleware, validateParams, casosController.updateCaso);
+router.patch('/:id', authMiddleware, validateParams, casosController.patchCaso);
+router.delete('/:id', authMiddleware, validateParams, casosController.deleteCaso);
 
 module.exports = router; 

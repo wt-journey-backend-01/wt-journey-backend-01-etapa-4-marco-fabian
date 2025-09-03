@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const agentesController = require('../controllers/agentesController');
+const authMiddleware = require('../middlewares/authMiddleware');
 const { idSchema } = require('../utils/schemas');
 const { ValidationError } = require('../utils/errorHandler');
 
@@ -22,12 +23,12 @@ const validateParams = (req, res, next) => {
   }
 };
 
-router.get('/', agentesController.getAllAgentes);
-router.get('/:id', validateParams, agentesController.getAgenteById);
-router.get('/:id/casos', validateParams, agentesController.getCasosByAgente);
-router.post('/', agentesController.createAgente);
-router.put('/:id', validateParams, agentesController.updateAgente);
-router.patch('/:id', validateParams, agentesController.patchAgente);
-router.delete('/:id', validateParams, agentesController.deleteAgente);
+router.get('/', authMiddleware, agentesController.getAllAgentes);
+router.get('/:id', authMiddleware, validateParams, agentesController.getAgenteById);
+router.get('/:id/casos', authMiddleware, validateParams, agentesController.getCasosByAgente);
+router.post('/', authMiddleware, agentesController.createAgente);
+router.put('/:id', authMiddleware, validateParams, agentesController.updateAgente);
+router.patch('/:id', authMiddleware, validateParams, agentesController.patchAgente);
+router.delete('/:id', authMiddleware, validateParams, agentesController.deleteAgente);
 
 module.exports = router; 
