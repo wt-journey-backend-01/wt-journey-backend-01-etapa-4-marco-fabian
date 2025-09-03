@@ -2,16 +2,14 @@
 
 # 🧪 Relatório de Avaliação – Journey Levty Etapa 1 - marco-fabian
 
-**Data:** 03/09/2025 02:09
+**Data:** 03/09/2025 02:19
 
-**Nota Final:** `50.30/100`
+**Nota Final:** `52.05/100`
 **Status:** ❌ Reprovado
 
 ---
 ## ✅ Requisitos Obrigatórios
-- Foram encontrados `35` problemas nos requisitos obrigatórios. Veja abaixo os testes que falharam:
-  - ⚠️ **Falhou no teste**: `USERS: Recebe erro 400 ao tentar criar um usuário com e-mail já em uso`
-    - **Melhoria sugerida**: Nenhuma sugestão de melhoria disponível.
+- Foram encontrados `34` problemas nos requisitos obrigatórios. Veja abaixo os testes que falharam:
   - ⚠️ **Falhou no teste**: `AGENTS: Cria agentes corretamente com status code 201 e os dados inalterados do agente mais seu ID`
     - **Melhoria sugerida**: Nenhuma sugestão de melhoria disponível.
   - ⚠️ **Falhou no teste**: `AGENTS: Lista todos os agente corretamente com status code 200 e todos os dados de cada agente listados corretamente`
