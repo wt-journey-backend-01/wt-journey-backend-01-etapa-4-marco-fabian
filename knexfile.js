@@ -22,7 +22,7 @@ module.exports = {
   test: {
     client: 'pg',
     connection: {
-      host: process.env.POSTGRES_HOST || '127.0.0.1',
+      host: process.env.POSTGRES_HOST || 'postgres',
       port: process.env.POSTGRES_PORT || 5432,
       user: process.env.POSTGRES_USER || 'postgres',
       password: process.env.POSTGRES_PASSWORD || 'postgres',
@@ -48,7 +48,7 @@ module.exports = {
   ci: {
     client: 'pg',
     connection: {
-      host: process.env.POSTGRES_HOST || 'postgres', 
+      host: process.env.POSTGRES_HOST || 'postgres',
       port: process.env.POSTGRES_PORT || 5432,
       user: process.env.POSTGRES_USER || 'postgres',
       password: process.env.POSTGRES_PASSWORD || 'postgres',
@@ -75,7 +75,7 @@ module.exports = {
   autograder: {
     client: 'pg',
     connection: {
-      host: process.env.POSTGRES_HOST || '127.0.0.1',
+      host: process.env.POSTGRES_HOST || 'postgres',
       port: process.env.POSTGRES_PORT || 5432,
       user: process.env.POSTGRES_USER || 'postgres',
       password: process.env.POSTGRES_PASSWORD || 'postgres',
