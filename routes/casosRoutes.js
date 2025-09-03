@@ -1,11 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const casosController = require('../controllers/casosController');
-const authMiddleware = require('../middlewares/authMiddleware');
 const { idSchema } = require('../utils/schemas');
 const { ValidationError } = require('../utils/errorHandler');
 
-// Middleware para validar parâmetros antes da autenticação
+// Middleware para validar parâmetros
 const validateParams = (req, res, next) => {
   try {
     // Validar parâmetro ID se existir
@@ -25,18 +24,17 @@ const validateParams = (req, res, next) => {
         throw new ValidationError(fieldErrors);
       }
     }
-
-    // Se a validação passou, continua para autenticação
-    authMiddleware(req, res, next);
+    // Se a validação passou, segue fluxo
+    next();
   } catch (error) {
     next(error);
   }
 };
 
-router.get('/', authMiddleware, casosController.getAllCasos);
+router.get('/', casosController.getAllCasos);
 router.get('/:id', validateParams, casosController.getCasoById);
 router.get('/:caso_id/agente', validateParams, casosController.getAgenteFromCaso);
-router.post('/', authMiddleware, casosController.createCaso);
+router.post('/', casosController.createCaso);
 router.put('/:id', validateParams, casosController.updateCaso);
 router.patch('/:id', validateParams, casosController.patchCaso);
 router.delete('/:id', validateParams, casosController.deleteCaso);

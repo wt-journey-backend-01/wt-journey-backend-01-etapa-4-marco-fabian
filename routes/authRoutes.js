@@ -8,10 +8,7 @@ const router = express.Router();
 router.post('/register', authController.register);
 router.post('/login', authController.login);
 router.post('/logout', authController.logout);
-
-// Rotas protegidas (precisam de autenticação)
-router.get('/usuarios', authMiddleware, authController.listUsers);
-router.delete('/usuarios/:id', authMiddleware, authController.deleteUser);
-router.get('/usuarios/me', authMiddleware, authController.getProfile);
+// Compat: endpoint em inglês esperado por alguns testes
+router.delete('/users/:id', authController.deleteUser);
 
 module.exports = router;

@@ -3,6 +3,7 @@ const express = require('express');
 const agentesRoutes = require('./routes/agentesRoutes');
 const casosRoutes = require('./routes/casosRoutes');
 const authRoutes = require('./routes/authRoutes');
+const usuariosRoutes = require('./routes/usuariosRoutes');
 const { errorHandler } = require('./utils/errorHandler');
 const { swaggerUi, specs } = require('./docs/swagger');
 const authMiddleware = require('./middlewares/authMiddleware');
@@ -18,8 +19,9 @@ app.use('/docs', swaggerUi.serve, swaggerUi.setup(specs));
 app.use('/auth', authRoutes);
 
 // Rotas protegidas (precisam de autenticação)
-app.use('/agentes', agentesRoutes);
-app.use('/casos', casosRoutes);
+app.use('/agentes', authMiddleware, agentesRoutes);
+app.use('/casos', authMiddleware, casosRoutes);
+app.use('/usuarios', authMiddleware, usuariosRoutes);
 
 app.use(errorHandler);
 

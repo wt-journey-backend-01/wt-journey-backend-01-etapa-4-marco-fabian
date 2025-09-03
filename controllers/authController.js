@@ -44,12 +44,8 @@ class AuthController {
       });
 
       res.status(201).json({
-        message: 'Usuário criado com sucesso',
-        usuario: {
-          id: usuario.id,
-          nome: usuario.nome,
-          email: usuario.email
-        }
+        nome: usuario.nome,
+        email: usuario.email
       });
     } catch (error) {
       next(error);
@@ -83,13 +79,18 @@ class AuthController {
         });
       }
 
+      const jwtSecret = process.env.JWT_SECRET;
+      if (!jwtSecret) {
+        throw new Error('JWT_SECRET não configurado');
+      }
+
       const token = jwt.sign(
         {
           id: usuario.id,
           email: usuario.email,
           nome: usuario.nome
         },
-        process.env.JWT_SECRET || "segredo",
+        jwtSecret,
         { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
       );
 

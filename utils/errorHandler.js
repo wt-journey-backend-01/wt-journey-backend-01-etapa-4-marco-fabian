@@ -16,8 +16,8 @@ class InvalidIdError extends APIError {
 }
 
 class IdNotFoundError extends APIError {
-  constructor(errors) {
-    super("ID inexistente", 404, errors);
+  constructor(message = "ID inexistente", errors) {
+    super(message, 404, errors);
   }
 }
 
@@ -132,7 +132,7 @@ function createValidationError(message, errors) {
 }
 
 function createNotFoundError(message = 'Recurso não encontrado') {
-  return new IdNotFoundError({ resource: message });
+  return new IdNotFoundError(message, { resource: message });
 }
 
 function validateRequiredFields(data, requiredFields) {
